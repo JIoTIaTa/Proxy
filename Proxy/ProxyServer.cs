@@ -7,12 +7,15 @@ using System.Text;
 
 namespace Proxy
 {
+    [Serializable]
     class ProxyServer
-    {
+    {        
         private string iPAddress;
         private int port;
         private string login;
         private string password;
+
+        [NonSerialized]
         WebProxy webProxy;
 
         public string IPAddress

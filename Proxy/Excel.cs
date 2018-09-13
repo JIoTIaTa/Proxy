@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Proxy
 {
@@ -13,16 +14,30 @@ namespace Proxy
         Application ObjExcel;
         Workbook ObjWorkBook;
 
+        public event Action<object> BookLoaded;
 
         private string urlPattern = "http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\\'\\,]*)?";
-        public Excel(string fileName)
+        public Excel()
         {
-            this.fileName = fileName;
             //Создаём приложение.
             ObjExcel = new Application();
-            //Открываем книгу.                                                                                                                                                        
-            ObjWorkBook = ObjExcel.Workbooks.Open(fileName, 0, false, 5, "", "", false, XlPlatform.xlWindows, "", true, false, 0, true, false, false);            
         }
+        public void LoadBook(string fileName)
+        {
+            this.fileName = fileName;
+            try
+            {
+                Task task = Task.Run(() =>
+                {
+                    //Открываем книгу.                                                                                                                                                        
+                    ObjWorkBook = ObjExcel.Workbooks.Open(fileName, 0, false, 5, "", "", false, XlPlatform.xlWindows, "", true, false, 0, true, false, false);
+                });
+                task.Wait();
+                BookLoaded?.Invoke(this);
+            }
+            catch { }
+        }
+        
         ~Excel()
         {
             //Удаляем приложение (выходим из экселя) - ато будет висеть в процессах!
@@ -37,6 +52,7 @@ namespace Proxy
 
             try
             {
+
                 for (int i = 1; i <= rowsCount; i++)
                 {
                     string text = ((Range)(ObjWorkSheet.Cells[i, 1])).Text.ToString();
@@ -45,8 +61,6 @@ namespace Proxy
                     {
                         urls.Add(text);
                     }
-
-                    //System.Windows.Forms.Application.DoEvents();
                 }
 
             }
