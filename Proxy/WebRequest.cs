@@ -5,12 +5,20 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Proxy.Parser;
 
 namespace Proxy
 {
     class WebRequest
     {
         WebProxy webProxy;
+        private ParserWorker<string[]> parser;
+
+        public ParserWorker<string[]> Parser
+        {
+            get { return parser; }
+            set { parser = value; }
+        }
 
         public event Action<object, string> NewLog;
 
@@ -34,6 +42,8 @@ namespace Proxy
             {
                 System.Net.WebRequest wrq = System.Net.WebRequest.Create(webpage);
                 wrq.Proxy = webProxy;
+                
+                
                 WebResponse wrs = await wrq.GetResponseAsync();
                 wrq.Abort();
                 wrs.Close();
@@ -47,6 +57,18 @@ namespace Proxy
             }
         }
 
+        public  void Parse(string webpage)
+        {
+            try
+            {
+                parser.WebProxy = this.webProxy;
+                parser.Start(webpage);
+            }
+            catch (Exception exception)
+            {
+               
+            }
+        }
 
     }
 }

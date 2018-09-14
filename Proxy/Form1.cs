@@ -10,6 +10,8 @@ using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Net;
 using System.IO;
+using Proxy.Parser;
+using Proxy.Parser.Facebook;
 
 namespace Proxy
 {
@@ -24,6 +26,7 @@ namespace Proxy
         List<string> logs;
         WebRequest webPage;
         FileParametrs fileParametrs;
+        private ParserWorker<string[]> parser;
 
 
         public Form1()
@@ -171,12 +174,20 @@ namespace Proxy
             }
             if (proxyParameters != null)
             {
-                WebRequest webPage = new WebRequest(proxyParameters);
-                webPage.NewLog += WebPage_NewLog;
-                foreach (var item in urls)
-                {
-                    webPage.Connect(item);
-                }
+                #region Перехід на посилання через WebRequest
+                //WebRequest webPage = new WebRequest(proxyParameters);
+                //webPage.NewLog += WebPage_NewLog;
+                //foreach (var item in urls)
+                //{
+                //    webPage.Connect(item);
+                //}
+                #endregion
+
+                #region Перехід на посилання через ParserWorker
+                parser = new ParserWorker<string[]>(new FacebookParser(), proxyParameters);
+                parser.OnNewRequestResult += WebPage_NewLog;
+                parser.Start(urls);
+                #endregion
             }
             else
             {

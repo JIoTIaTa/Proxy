@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28010.2016
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Proxy", "Proxy\Proxy.csproj", "{365FFC4A-9913-4499-8A93-968A850C0BFE}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "ProxyServer", "SetupProxyServer\SetupProxyServer.vdproj", "{C5988308-672E-4D64-AF67-87B0BAE87046}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,8 @@ Global
 		{365FFC4A-9913-4499-8A93-968A850C0BFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{365FFC4A-9913-4499-8A93-968A850C0BFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{365FFC4A-9913-4499-8A93-968A850C0BFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5988308-672E-4D64-AF67-87B0BAE87046}.Debug|Any CPU.ActiveCfg = Debug
+		{C5988308-672E-4D64-AF67-87B0BAE87046}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
