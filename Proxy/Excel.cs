@@ -5,13 +5,13 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AngleSharp.Css.Values;
 
 namespace Proxy
 {
     class Excel
     {
-        private string fileName;
-        Application ObjExcel;
+        Application ObjWorkApplication;
         Workbook ObjWorkBook;
 
         public event Action<object> BookLoaded;
@@ -20,17 +20,16 @@ namespace Proxy
         public Excel()
         {
             //Создаём приложение.
-            ObjExcel = new Application();
+            ObjWorkApplication = new Application();
         }
         public void LoadBook(string fileName)
         {
-            this.fileName = fileName;
             try
             {
                 Task task = Task.Run(() =>
                 {
                     //Открываем книгу.                                                                                                                                                        
-                    ObjWorkBook = ObjExcel.Workbooks.Open(fileName, 0, false, 5, "", "", false, XlPlatform.xlWindows, "", true, false, 0, true, false, false);
+                    ObjWorkBook = ObjWorkApplication.Workbooks.Open(fileName, 0, false, 5, "", "", false, XlPlatform.xlWindows, "", true, false, 0, true, false, false);
                 });
                 task.Wait();
                 BookLoaded?.Invoke(this);
@@ -40,8 +39,8 @@ namespace Proxy
         
         ~Excel()
         {
-            //Удаляем приложение (выходим из экселя) - ато будет висеть в процессах!
-            ObjExcel.Quit();
+            //Удаляем приложение (выходим из экселя) - а то будет висеть в процессах!
+            ObjWorkApplication.Quit();
         }
         public List<string> Read(int rowsCount)
         {
@@ -61,11 +60,49 @@ namespace Proxy
                     {
                         urls.Add(text);
                     }
+                    else
+                    {
+                        urls.Add(null);
+                    }
                 }
-
             }
             catch { }
             return urls;
+        }
+
+        public void  WriteLogs(List<string> logs)
+        {
+            Worksheet ObjWorkSheet;
+            ObjWorkSheet = (Worksheet)ObjWorkBook.Sheets[1];
+
+            try
+            {
+                int row = 1;
+                foreach (var item in logs)
+                {
+                    if (item.Contains("NotFound"))
+                    {
+                        ObjWorkSheet.Cells[row, 1].Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                    }
+                    else if (item.Contains("OK"))
+                    {
+                        ObjWorkSheet.Cells[row, 1].Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Green);
+                    }
+                    else if (item.Contains("No address"))
+                    {
+                        ObjWorkSheet.Cells[row, 1].Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.DeepSkyBlue);
+                    }
+                    else
+                    {
+                        ObjWorkSheet.Cells[row, 1].Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Yellow);
+                    }
+                    row++;
+                }
+                ObjWorkBook.Save();
+                ObjWorkApplication.Save();
+
+            }
+            catch(Exception exception) { }
         }
     }
 }
