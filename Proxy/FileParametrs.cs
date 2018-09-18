@@ -13,16 +13,18 @@ namespace Proxy
         public string LocalPath;
         public int RowsCount;
         public int TimerInterval;
+        public string gDriveFileId;
         public FileParametrs()
         {
 
         }
-        public FileParametrs(string FileUrl, string LocalPath, int RowsCount, int TimerInterval)
+        public FileParametrs(string FileUrl, string LocalPath, int RowsCount, int TimerInterval, string gDriveFileId)
         {
             this.FileUrl = FileUrl;
             this.LocalPath = LocalPath;
             this.RowsCount = RowsCount;
             this.TimerInterval = TimerInterval;
-    }
+            this.gDriveFileId = gDriveFileId;
+        }
     }
 }

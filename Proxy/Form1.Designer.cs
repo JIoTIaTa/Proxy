@@ -47,7 +47,7 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.textBox_fileUrl = new System.Windows.Forms.TextBox();
+            this.textBox_fileName = new System.Windows.Forms.TextBox();
             this.timer_response = new System.Windows.Forms.Timer(this.components);
             this.numericUpDown_tickValue = new System.Windows.Forms.NumericUpDown();
             this.label7 = new System.Windows.Forms.Label();
@@ -230,13 +230,13 @@
             this.toolStripStatusLabel1.Size = new System.Drawing.Size(47, 17);
             this.toolStripStatusLabel1.Text = "Привет";
             // 
-            // textBox_fileUrl
+            // textBox_fileName
             // 
-            this.textBox_fileUrl.Location = new System.Drawing.Point(7, 25);
-            this.textBox_fileUrl.Name = "textBox_fileUrl";
-            this.textBox_fileUrl.Size = new System.Drawing.Size(466, 20);
-            this.textBox_fileUrl.TabIndex = 15;
-            this.textBox_fileUrl.TextChanged += new System.EventHandler(this.textBox_fileUrl_TextChanged);
+            this.textBox_fileName.Location = new System.Drawing.Point(7, 25);
+            this.textBox_fileName.Name = "textBox_fileName";
+            this.textBox_fileName.Size = new System.Drawing.Size(466, 20);
+            this.textBox_fileName.TabIndex = 15;
+            this.textBox_fileName.TextChanged += new System.EventHandler(this.textBox_fileUrl_TextChanged);
             // 
             // timer_response
             // 
@@ -356,7 +356,7 @@
             // 
             // tabPage1
             // 
-            this.tabPage1.Controls.Add(this.textBox_fileUrl);
+            this.tabPage1.Controls.Add(this.textBox_fileName);
             this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
@@ -434,7 +434,7 @@
         private System.Windows.Forms.TextBox textBox_filePath;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
-        private System.Windows.Forms.TextBox textBox_fileUrl;
+        private System.Windows.Forms.TextBox textBox_fileName;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.Timer timer_response;
         private System.Windows.Forms.NumericUpDown numericUpDown_tickValue;

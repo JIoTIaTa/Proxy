@@ -15,15 +15,17 @@ namespace Proxy
         Workbook ObjWorkBook;
 
         public event Action<object> BookLoaded;
+        public event Action<object> BookClosed;
 
         private string urlPattern = "http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\\'\\,]*)?";
+
         public Excel()
         {
-            //Создаём приложение.
-            ObjWorkApplication = new Application();
+            CreateExcelApplication();
         }
         public void LoadBook(string fileName)
         {
+            //CloseExcelApplication();
             try
             {
                 Task task = Task.Run(() =>
@@ -40,7 +42,44 @@ namespace Proxy
         ~Excel()
         {
             //Удаляем приложение (выходим из экселя) - а то будет висеть в процессах!
-            ObjWorkApplication.Quit();
+            CloseExcelApplication();
+        }
+
+        private void CreateExcelApplication()
+        {
+            //Создаём приложение.
+            if (ObjWorkApplication == null)
+            {
+                ObjWorkApplication = new Application();
+                ObjWorkApplication.Visible = true;
+            }
+        }
+        private void CloseExcelApplication()
+        {
+            if (ObjWorkApplication != null)
+            {
+                ObjWorkApplication.Workbooks.Close();
+                BookClosed.Invoke(this);
+                ObjWorkApplication.Quit();
+            }
+        }
+
+        public void CloseCurrentBook()
+        {
+            try
+            {
+                ObjWorkBook.Save();
+            }
+            catch
+            {
+            }
+            finally
+            {
+                ObjWorkBook.Close();
+                BookClosed.Invoke(this);
+            }
+
+            
         }
         public List<string> Read(int rowsCount)
         {
@@ -98,9 +137,12 @@ namespace Proxy
                     }
                     row++;
                 }
-                ObjWorkBook.Save();
-                ObjWorkApplication.Save();
 
+                try
+                {
+                    ObjWorkBook.Save();
+                }
+                catch { }
             }
             catch(Exception exception) { }
         }

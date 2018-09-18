@@ -6,6 +6,8 @@ using System.Text;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.IO;
+using System.Runtime.CompilerServices;
+using Google.Apis.Download;
 using Proxy.GoogleDriveAPI;
 using Proxy.Parser;
 using Proxy.Parser.Facebook;
@@ -25,28 +27,40 @@ namespace Proxy
         FileParametrs fileParametrs;
         private ParserWorker<string[]> parser;
         private GDrive gDrive;
-        private string excelFileName;
+        private string gDriveFileId = null;
+        private Action<string> openNewExcelBook;
 
 
         public Form1()
         {           
             InitializeComponent();
-            if (Serializator.Read(proxy, "proxy.dat") != null)
+
+            #region Сериализация
+
+            string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+            string proxySettingsFileName = "proxy.dat";
+            string proxySettingsFullPath = Path.Combine(userDocumentsPath, "Proxy Master", proxySettingsFileName);
+            if (Serializator.Read(proxy, proxySettingsFullPath) != null)
             {
-                proxy = Serializator.Read(proxy, "proxy.dat");
+                proxy = Serializator.Read(proxy, proxySettingsFullPath);
             }
             else
             {
                 proxy = new ProxyServer("213.141.129.97", 47881, "khorok", "khorok412");
             }
-            if (Serializator.Read(fileParametrs, "parametrs.dat") != null)
+            string formSettingsFileName = "parameters.dat";
+            string formSettingsFullPath = Path.Combine(userDocumentsPath, "Proxy Master", formSettingsFileName);
+            if (Serializator.Read(fileParametrs, formSettingsFullPath) != null)
             {
-                fileParametrs = Serializator.Read(fileParametrs, "parametrs.dat");
+                fileParametrs = Serializator.Read(fileParametrs, formSettingsFullPath);
             }
             else
             {
-                fileParametrs = new FileParametrs("FileName", "C:\\file", 100, 30 * 60000);
+                fileParametrs = new FileParametrs("FileName", "C:\\file", 100, 30 * 60000, null);
             }
+
+
+            #endregion
             textBox_IP.Text = proxy.IPAddress;
             numericUpDown_port.Value = proxy.Port;
             textBox_login.Text = proxy.Login;
@@ -58,10 +72,11 @@ namespace Proxy
             webPage.NewLog += WebPage_NewLog;
             excel = new Excel();
             excel.BookLoaded += Excel_BookLoaded;
-            
+            excel.BookClosed += ExcelOnBookClosed;
+            openNewExcelBook += OpenNewExcelBook;
 
             //temp
-            textBox_fileUrl.Text = fileParametrs.FileUrl;
+            textBox_fileName.Text = fileParametrs.FileUrl;
             textBox_filePath.Text = fileParametrs.LocalPath;
             numericUpDown_Rows.Value = fileParametrs.RowsCount;
             numericUpDown_tickValue.Value = fileParametrs.TimerInterval / 60000;
@@ -70,12 +85,14 @@ namespace Proxy
             {
                 gDrive = new GDrive();
                 gDrive.ErrorMessage += GDrive_ErrorMessage;
+                gDrive.DownloadProgres += DownloadCompleted;
+                gDrive.UploadCompleted += GDriveOnUploadCompleted;
             }
             catch (Exception exception)
             {
                 if (exception.Message == "Object reference not set to an instance of an object.")
                 {
-                    MessageBox.Show("Не удалось соединиться со службой gDrive\nПроверьте наличие файла client_secret.json в корне и перезапутстите приложение");
+                    MessageBox.Show("Не удалось соединиться со службой gDrive.\nПроверьте наличие файла client_secret.json в User/Documents/ProxyMaster и перезапутстите приложение","Ошибка авторизации gDrive");
                 }
                 else
                 {
@@ -86,16 +103,44 @@ namespace Proxy
             }
         }
 
+        private void GDriveOnUploadCompleted(string fileId, string fileName)
+        {
+            string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+            string localFileName = Path.Combine(userDocumentsPath, "Proxy Master", fileName);
+            gDrive.DownloadFileFromDrive(fileId, localFileName);
+            openNewExcelBook.Invoke(localFileName);
+            //loadGDriveFile(textBox_fileName.Text); // відкрить апку і загрузить ще раз новий файл
+        }
+
+        private void ExcelOnBookClosed(object obj)
+        {
+            button_start.Enabled = false;
+        }
+
+        private void OpenNewExcelBook(string obj)
+        {
+            toolStripStatusLabel1.Text = "Подгружаем локальный файл";
+            //excel.CreateExcelApplication();
+            excel.LoadBook(obj);
+        }
+
+        //Івент завантаження книги з gDrive
+        private void DownloadCompleted(string filePath)
+        {
+            textBox_filePath.Text = filePath;
+            openNewExcelBook.Invoke(filePath);
+        }
+
         private void GDrive_ErrorMessage(string obj)
         {
             toolStripStatusLabel1.Text = obj;
         }
 
+        //Івент, коли книга відкрилась
         private void Excel_BookLoaded(object obj)
         {
             button_start.Enabled = true;
             toolStripStatusLabel1.Text = "Готов к запуску";
-            button_start.Enabled = true;
         }
 
         private void button_start_Click(object sender, EventArgs e)
@@ -103,6 +148,7 @@ namespace Proxy
             timer_response.Enabled = true;
         }
 
+        //Івент винонання переходу по посиланню
         private void WebPage_NewLog(object arg1, string arg2)
         {
             logs.Add(arg2);
@@ -114,10 +160,27 @@ namespace Proxy
                 toolStripStatusLabel1.Text = message;
                 notifyIcon1.BalloonTipText = message;
                 notifyIcon1.ShowBalloonTip(1000);
-                writeLogs();
-                writeLogsToExcel();
+                writeLogs(); // записать в .txt
+                writeLogsToExcel(); // записать в xlsx
+                uploadTogDrive();
             }
         }
+
+        private void uploadTogDrive()
+        {
+            //if (gDriveFileId != null) // заміним файл, якщо його прогружали і залишився ID
+            //{
+            //    gDrive.UploadFileToDrive(textBox_fileName.Text, gDriveFileId, textBox_filePath.Text, ContentType.spreadsheet);
+            //}
+            //else
+            //{
+            //excel.CloseExcelApplication(); // відпустить апку excel
+            excel.CloseCurrentBook();
+            gDrive.UploadFileToDrive(textBox_fileName.Text, textBox_filePath.Text, ContentType.spreadsheet);
+            //}
+        }
+
+        //Запис логів в .txt
         private void writeLogs()
         {
             
@@ -131,10 +194,12 @@ namespace Proxy
                 }
             }
         }
+        //Правка книги excel по логам
         private void writeLogsToExcel()
         {
             excel.WriteLogs(logs);
         }
+        //Прорахунок наступного проходу
         private string nextConnect()
         {
             var time = DateTime.Now;
@@ -153,19 +218,20 @@ namespace Proxy
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 textBox_filePath.Text = openFileDialog1.FileName;
+                openNewExcelBook.Invoke(openFileDialog1.FileName);
             }
         }
 
         private void textBox_fileUrl_TextChanged(object sender, EventArgs e)
         {
-            if (!textBox_fileUrl.Text.Contains(".xls") || !textBox_fileUrl.Text.Contains(".xlsx"))
+            if (!textBox_fileName.Text.Contains(".xls") || !textBox_fileName.Text.Contains(".xlsx"))
             {
-                textBox_fileUrl.ForeColor = Color.Orange;
+                textBox_fileName.ForeColor = Color.Orange;
                 toolStripStatusLabel1.Text = "Неправильное название Excel файла";
             }
             else
             {
-                textBox_fileUrl.ForeColor = Color.Blue;
+                textBox_fileName.ForeColor = Color.Blue;
                 toolStripStatusLabel1.Text = "Жми Загрузить!";
             }
         }
@@ -180,8 +246,7 @@ namespace Proxy
         {
             if (textBox_filePath.Text.Contains(".xlsx") || textBox_filePath.Text.Contains(".xls"))
             {
-                toolStripStatusLabel1.Text = "Подгружаем локальный файл";
-                excel.LoadBook(textBox_filePath.Text);
+                
             }
         }
         private void Start()
@@ -257,13 +322,21 @@ namespace Proxy
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Serializator.Write(proxy, "proxy.dat");
+            string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+            string proxySettingsFileName = "proxy.dat";
+            string proxySettingsFullPath = Path.Combine(userDocumentsPath, "Proxy Master", proxySettingsFileName);
 
-            fileParametrs.FileUrl = textBox_fileUrl.Text;
+            Serializator.Write(proxy, proxySettingsFullPath);
+
+            fileParametrs.FileUrl = textBox_fileName.Text;
             fileParametrs.LocalPath = textBox_filePath.Text;
             fileParametrs.RowsCount = (int)numericUpDown_Rows.Value;
             fileParametrs.TimerInterval = (int)numericUpDown_tickValue.Value * 60000;
-            Serializator.Write(fileParametrs, "parametrs.dat");
+            fileParametrs.gDriveFileId = gDriveFileId;
+            string formSettingsFileName = "parameters.dat";
+            string formSettingsFullPath = Path.Combine(userDocumentsPath, "Proxy Master", formSettingsFileName);
+
+            Serializator.Write(fileParametrs, formSettingsFullPath);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -302,7 +375,7 @@ namespace Proxy
 
         private void button2_Click(object sender, EventArgs e)
         {
-            loadGDriveFile(textBox_fileUrl.Text);
+            loadGDriveFile(textBox_fileName.Text);
         }
 
         private void loadGDriveFile(string fileName)
@@ -312,13 +385,16 @@ namespace Proxy
                 string fileId = null;
                 if (files.TryGetValue(fileName, out fileId))
                 {
-                    textBox_fileUrl.ForeColor = Color.Green;
+                    textBox_fileName.ForeColor = Color.Green;
                     toolStripStatusLabel1.Text = "Загрузка файла с gDrive...";
+                    gDriveFileId = fileId;
                     try
                     {
-                        string localFileName = $"{Environment.CurrentDirectory.ToString()}\\{fileName}";
+                    //string localFileName = $"{Environment.CurrentDirectory.ToString()}\\{fileName}";
+
+                        string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+                        string localFileName = Path.Combine(userDocumentsPath, "Proxy Master", fileName);
                         gDrive.DownloadFileFromDrive(fileId, localFileName);
-                        textBox_filePath.Text = localFileName;
                     }
                     catch (Exception e)
                     {
@@ -327,7 +403,7 @@ namespace Proxy
                 }
                 else
                 {
-                textBox_fileUrl.ForeColor = Color.Red;
+                textBox_fileName.ForeColor = Color.Red;
                 toolStripStatusLabel1.Text = $"{fileName} не найден";
                 }
             

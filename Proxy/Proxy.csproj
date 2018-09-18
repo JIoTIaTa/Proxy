@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DownloadFile.cs" />
+    <Compile Include="EnumAtributes\BaseAtribute.cs" />
     <Compile Include="Excel.cs" />
     <Compile Include="FileParametrs.cs" />
     <Compile Include="Form1.cs">
