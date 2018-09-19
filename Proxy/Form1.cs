@@ -83,10 +83,11 @@ namespace Proxy
 
             try
             {
-                gDrive = new GDrive();
+                string client_secretPath = Path.Combine(userDocumentsPath, "Proxy Master", "client_secret.json");
+                gDrive = new GDrive(client_secretPath);
                 gDrive.ErrorMessage += GDrive_ErrorMessage;
                 gDrive.DownloadProgres += DownloadCompleted;
-                gDrive.UploadCompleted += GDriveOnUploadCompleted;
+                gDrive.UpdateCompleted += GDriveOnUpdateCompleted;
             }
             catch (Exception exception)
             {
@@ -103,13 +104,11 @@ namespace Proxy
             }
         }
 
-        private void GDriveOnUploadCompleted(string fileId, string fileName)
+        private void GDriveOnUpdateCompleted(string fileId)
         {
             string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-            string localFileName = Path.Combine(userDocumentsPath, "Proxy Master", fileName);
+            string localFileName = Path.Combine(userDocumentsPath, "Proxy Master", textBox_fileName.Text);
             gDrive.DownloadFileFromDrive(fileId, localFileName);
-            openNewExcelBook.Invoke(localFileName);
-            //loadGDriveFile(textBox_fileName.Text); // відкрить апку і загрузить ще раз новий файл
         }
 
         private void ExcelOnBookClosed(object obj)
@@ -145,7 +144,15 @@ namespace Proxy
 
         private void button_start_Click(object sender, EventArgs e)
         {
-            timer_response.Enabled = true;
+            if (!timer_response.Enabled)
+            {
+                timer_response.Enabled = true;
+            }
+            else
+            {
+                timer_response.Stop();
+                timer_response.Start();
+            }
         }
 
         //Івент винонання переходу по посиланню
@@ -168,16 +175,15 @@ namespace Proxy
 
         private void uploadTogDrive()
         {
-            //if (gDriveFileId != null) // заміним файл, якщо його прогружали і залишився ID
-            //{
-            //    gDrive.UploadFileToDrive(textBox_fileName.Text, gDriveFileId, textBox_filePath.Text, ContentType.spreadsheet);
-            //}
-            //else
-            //{
-            //excel.CloseExcelApplication(); // відпустить апку excel
             excel.CloseCurrentBook();
-            gDrive.UploadFileToDrive(textBox_fileName.Text, textBox_filePath.Text, ContentType.spreadsheet);
-            //}
+            if (gDriveFileId != null) // заміним файл, якщо його прогружали і залишився ID
+            {
+                gDrive.UpdateFileAtDrive(gDriveFileId, textBox_filePath.Text, ContentType.spreadsheet);
+            }
+            else
+            {
+                gDrive.UploadFileToDrive(textBox_fileName.Text, textBox_filePath.Text, ContentType.spreadsheet);
+            }
         }
 
         //Запис логів в .txt
@@ -224,16 +230,16 @@ namespace Proxy
 
         private void textBox_fileUrl_TextChanged(object sender, EventArgs e)
         {
-            if (!textBox_fileName.Text.Contains(".xls") || !textBox_fileName.Text.Contains(".xlsx"))
-            {
-                textBox_fileName.ForeColor = Color.Orange;
-                toolStripStatusLabel1.Text = "Неправильное название Excel файла";
-            }
-            else
-            {
-                textBox_fileName.ForeColor = Color.Blue;
-                toolStripStatusLabel1.Text = "Жми Загрузить!";
-            }
+            //if (!textBox_fileName.Text.Contains(".xls") || !textBox_fileName.Text.Contains(".xlsx"))
+            //{
+            //    textBox_fileName.ForeColor = Color.Orange;
+            //    toolStripStatusLabel1.Text = "Неправильное название Excel файла";
+            //}
+            //else
+            //{
+            //    textBox_fileName.ForeColor = Color.Blue;
+            //    toolStripStatusLabel1.Text = "Жми Загрузить!";
+            //}
         }
 
         private void timer_response_Tick(object sender, EventArgs e)

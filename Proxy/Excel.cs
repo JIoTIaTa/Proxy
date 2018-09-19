@@ -51,7 +51,7 @@ namespace Proxy
             if (ObjWorkApplication == null)
             {
                 ObjWorkApplication = new Application();
-                ObjWorkApplication.Visible = true;
+                //ObjWorkApplication.Visible = true;
             }
         }
         private void CloseExcelApplication()

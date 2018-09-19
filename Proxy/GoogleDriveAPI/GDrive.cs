@@ -279,8 +279,8 @@ namespace Proxy.GoogleDriveAPI
 
             using (var stream = new FileStream("client_secret.json", FileMode.Open, FileAccess.Read))
             {
-                string creadPath = Environment.CurrentDirectory;
-                creadPath = Path.Combine(creadPath, "gDriveUpload", "drive-credentinals.json");
+                string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+                string creadPath = Path.Combine(userDocumentsPath, "Proxy Master", "gDriveUpload", "drive-credentinals.json");
 
                 return GoogleWebAuthorizationBroker.AuthorizeAsync(
                     GoogleClientSecrets.Load(stream).Secrets,
