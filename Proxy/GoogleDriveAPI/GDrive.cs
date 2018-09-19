@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Threading;
 using AngleSharp.Html;
+using AngleSharp.Network;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
@@ -40,7 +41,7 @@ namespace Proxy.GoogleDriveAPI
         script,
         [BaseAttribute.GoogleDriveType("application/vnd.google-apps.site")]
         site,
-        [BaseAttribute.GoogleDriveType("application/vnd.google-apps.spreadsheet")]
+        [BaseAttribute.GoogleDriveType("application/vnd.ms-excel")]
         spreadsheet,
         [BaseAttribute.GoogleDriveType("application/vnd.google-apps.unknown")]
         unknown,
@@ -51,7 +52,7 @@ namespace Proxy.GoogleDriveAPI
     }
     class GDrive
     {
-        private string[] scopes = {DriveService.Scope.Drive};
+        private string[] scopes = { DriveService.Scope.Drive };
         private string applicationName = "Proxy";
 
         private UserCredential credential;
@@ -61,10 +62,29 @@ namespace Proxy.GoogleDriveAPI
         public event Action<string> DownloadProgres;
         public event Action<string> ErrorMessage;
         public event Action<string, string> UploadCompleted;
+        public event Action<string> UpdateCompleted;
+
+
+        public GDrive(string jsonFileFullPath)
+        {
+            Authentication(jsonFileFullPath);
+        }
 
         public GDrive()
         {
-           Authentication();
+            Authentication();
+        }
+        private void Authentication(string jsonFileFullPath)
+        {
+            try
+            {
+                credential = GetUserCredentional(jsonFileFullPath);
+                driveService = GetDriveService(credential);
+            }
+            catch (Exception e)
+            {
+                ErrorMessage.Invoke(e.Message);
+            }
         }
         private void Authentication()
         {
@@ -100,7 +120,11 @@ namespace Proxy.GoogleDriveAPI
                 return null;
             }
         }
-
+        /// <summary>
+        /// Завантаження файлу з gDrive
+        /// </summary>
+        /// <param name="fileId">id файлу</param>
+        /// <param name="filePath">куди зберігати</param>
         public async void DownloadFileFromDrive(string fileId, string filePath)
         {
             try
@@ -109,8 +133,6 @@ namespace Proxy.GoogleDriveAPI
 
                 using (var memoryStream = new MemoryStream())
                 {
-                    //request.MediaDownloader.ProgressChanged += MediaDownloader_ProgressChanged; 
-
                     await request.DownloadAsync(memoryStream);
 
                     using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
@@ -132,7 +154,7 @@ namespace Proxy.GoogleDriveAPI
         /// <param name="fileName"></param>
         /// <param name="filePath"></param>
         /// <param name="connentType"></param>
-        public async void UploadFileToDrive(string fileName, string filePath, ContentType connentType)
+        public void UploadFileToDrive(string fileName, string filePath, ContentType connentType)
         {
             try
             {
@@ -143,40 +165,33 @@ namespace Proxy.GoogleDriveAPI
 
                 using (var stream = new FileStream(filePath, FileMode.Open))
                 {
-                    request = driveService.Files.Create(fileMetadata, stream, connentType.GetGoogleDriveType());
-                    await request.UploadAsync();
-                    UploadCompleted?.Invoke(request.ResponseBody.Id, request.ResponseBody.Name);
+                    string type = connentType.GetGoogleDriveType();
+                    request = driveService.Files.Create(fileMetadata, stream, type);
+                    request.Upload();
+
+                    var file = request.ResponseBody;
+                    UploadCompleted.Invoke(file.Id, file.Name);
                     stream.Close();
                 }
-                
             }
             catch (Exception exception)
             {
                 ErrorMessage.Invoke(exception.Message);
             }
-           
+
         }
-        /// <summary>
-        /// Замінити файл по ID
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="fileId"></param>
-        /// <param name="filePath"></param>
-        /// <param name="connentType"></param>
-        public async void UploadFileToDrive(string fileName, string fileId, string filePath, ContentType connentType)
+        public void UploadFileToDrive(string fileName, string filePath, string connentType)
         {
             try
             {
                 var fileMetadata = new File();
                 fileMetadata.Name = fileName;
-                fileMetadata.Id = fileId;
 
                 FilesResource.CreateMediaUpload request;
 
                 using (var stream = new FileStream(filePath, FileMode.Open))
                 {
-                    request = driveService.Files.Create(fileMetadata, stream, connentType.GetGoogleDriveType());
-                    await request.UploadAsync();
+                    request = driveService.Files.Create(fileMetadata, stream, connentType); request.Upload();
                     var file = request.ResponseBody;
                     UploadCompleted?.Invoke(file.Id, file.Name);
                     stream.Close();
@@ -187,20 +202,85 @@ namespace Proxy.GoogleDriveAPI
             {
                 ErrorMessage.Invoke(exception.Message);
             }
+
+        }
+        /// <summary>
+        /// Обновить файл
+        /// </summary>
+        /// <param name="fileId"> id файла</param>
+        /// <param name="filePath"> путь к файлу</param>
+        /// <param name="connentType">тип файла </param>
+        public void UpdateFileAtDrive(string fileId, string filePath, string connentType)
+        {
+            try
+            {
+                var fileMetadata = new File();
+
+                using (var stream = new FileStream(filePath, FileMode.Open))
+                {
+                    var request = driveService.Files.Update(fileMetadata, fileId, stream, connentType);
+                    request.Upload();
+                    UpdateCompleted?.Invoke(request.FileId);
+                    stream.Close();
+                }
+
+            }
+            catch (Exception exception)
+            {
+                ErrorMessage.Invoke(exception.Message);
+            }
+        }
+        /// <summary>
+        /// Обновить файл
+        /// </summary>
+        /// <param name="fileId"> id файла</param>
+        /// <param name="filePath"> путь к файлу</param>
+        /// <param name="connentType">тип файла </param>
+        public void UpdateFileAtDrive(string fileId, string filePath, ContentType connentType)
+        {
+            try
+            {
+                var fileMetadata = new File();
+
+                using (var stream = new FileStream(filePath, FileMode.Open))
+                {
+                    string content = connentType.GetGoogleDriveType();
+                    var request = driveService.Files.Update(fileMetadata, fileId, stream, content);
+                    request.Upload();
+                    UpdateCompleted?.Invoke(request.FileId);
+                    stream.Close();
+                }
+
+            }
+            catch (Exception exception)
+            {
+                ErrorMessage.Invoke(exception.Message);
+            }
         }
 
-        private UserCredential GetUserCredentional()
+        private UserCredential GetUserCredentional(string proxySettingsFullPath)
         {
-            string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-            string currentFile = "client_secret.json";
-            string proxySettingsFullPath = Path.Combine(userDocumentsPath, "Proxy Master", currentFile);
-
-            //string currentFile = $"{Environment.CurrentDirectory}\\client_secret.json";
 
             using (var stream = new FileStream(proxySettingsFullPath, FileMode.Open, FileAccess.Read))
             {
-                string creadPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-                creadPath = Path.Combine(creadPath, "Proxy Master", "drive-credentinals.json");
+                string creadPath = Environment.CurrentDirectory;
+                creadPath = Path.Combine(creadPath, "gDriveUpload", "drive-credentinals.json");
+
+                return GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    GoogleClientSecrets.Load(stream).Secrets,
+                    scopes,
+                    "User",
+                    CancellationToken.None,
+                    new FileDataStore(creadPath, true)).Result;
+            }
+        }
+        private UserCredential GetUserCredentional()
+        {
+
+            using (var stream = new FileStream("client_secret.json", FileMode.Open, FileAccess.Read))
+            {
+                string creadPath = Environment.CurrentDirectory;
+                creadPath = Path.Combine(creadPath, "gDriveUpload", "drive-credentinals.json");
 
                 return GoogleWebAuthorizationBroker.AuthorizeAsync(
                     GoogleClientSecrets.Load(stream).Secrets,
@@ -213,10 +293,10 @@ namespace Proxy.GoogleDriveAPI
 
         private DriveService GetDriveService(UserCredential userCredential)
         {
-            return  new DriveService(
+            return new DriveService(
                 new BaseClientService.Initializer
                 {
-                    HttpClientInitializer =  userCredential,
+                    HttpClientInitializer = userCredential,
                     ApplicationName = applicationName
                 });
         }
