@@ -61,6 +61,9 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.timer_requestIntervval = new System.Windows.Forms.Timer(this.components);
+            this.label6 = new System.Windows.Forms.Label();
+            this.numericUpDown_requestInterval = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_port)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_Rows)).BeginInit();
             this.statusStrip1.SuspendLayout();
@@ -72,6 +75,7 @@
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_requestInterval)).BeginInit();
             this.SuspendLayout();
             // 
             // textBox_IP
@@ -205,7 +209,6 @@
             this.textBox_filePath.ReadOnly = true;
             this.textBox_filePath.Size = new System.Drawing.Size(453, 20);
             this.textBox_filePath.TabIndex = 13;
-            this.textBox_filePath.TextChanged += new System.EventHandler(this.textBox_filePath_TextChanged);
             // 
             // statusStrip1
             // 
@@ -236,7 +239,6 @@
             this.textBox_fileName.Name = "textBox_fileName";
             this.textBox_fileName.Size = new System.Drawing.Size(466, 20);
             this.textBox_fileName.TabIndex = 15;
-            this.textBox_fileName.TextChanged += new System.EventHandler(this.textBox_fileUrl_TextChanged);
             // 
             // timer_response
             // 
@@ -377,11 +379,50 @@
             this.tabPage2.Text = "Локальный файл";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
+            // timer_requestIntervval
+            // 
+            this.timer_requestIntervval.Interval = 1;
+            this.timer_requestIntervval.Tick += new System.EventHandler(this.timer_requestIntervval_Tick);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(349, 147);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(182, 13);
+            this.label6.TabIndex = 25;
+            this.label6.Text = "Период между обновлениями, сек";
+            // 
+            // numericUpDown_requestInterval
+            // 
+            this.numericUpDown_requestInterval.Location = new System.Drawing.Point(352, 163);
+            this.numericUpDown_requestInterval.Maximum = new decimal(new int[] {
+            360,
+            0,
+            0,
+            0});
+            this.numericUpDown_requestInterval.Minimum = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.numericUpDown_requestInterval.Name = "numericUpDown_requestInterval";
+            this.numericUpDown_requestInterval.Size = new System.Drawing.Size(75, 20);
+            this.numericUpDown_requestInterval.TabIndex = 24;
+            this.numericUpDown_requestInterval.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.numericUpDown_requestInterval.ValueChanged += new System.EventHandler(this.numericUpDown1_ValueChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(625, 271);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.numericUpDown_requestInterval);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.numericUpDown_tickValue);
@@ -412,6 +453,7 @@
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_requestInterval)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -449,6 +491,9 @@
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.Timer timer_requestIntervval;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.NumericUpDown numericUpDown_requestInterval;
     }
 }
 

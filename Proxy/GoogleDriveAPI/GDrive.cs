@@ -42,6 +42,7 @@ namespace Proxy.GoogleDriveAPI
         [BaseAttribute.GoogleDriveType("application/vnd.google-apps.site")]
         site,
         [BaseAttribute.GoogleDriveType("application/vnd.ms-excel")]
+        [BaseAttribute.FileExtension("xlsx")]
         spreadsheet,
         [BaseAttribute.GoogleDriveType("application/vnd.google-apps.unknown")]
         unknown,
@@ -140,6 +141,7 @@ namespace Proxy.GoogleDriveAPI
                         await fileStream.WriteAsync(memoryStream.GetBuffer(), 0, memoryStream.GetBuffer().Length);
                     }
                     DownloadProgres?.Invoke(filePath);
+                    
                 }
             }
             catch (Exception exception)

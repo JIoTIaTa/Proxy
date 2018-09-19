@@ -29,6 +29,7 @@ namespace Proxy
         private GDrive gDrive;
         private string gDriveFileId = null;
         private Action<string> openNewExcelBook;
+        private Action<bool> appInProcessing;
 
 
         public Form1()
@@ -74,6 +75,7 @@ namespace Proxy
             excel.BookLoaded += Excel_BookLoaded;
             excel.BookClosed += ExcelOnBookClosed;
             openNewExcelBook += OpenNewExcelBook;
+            appInProcessing += AppInProcessing;
 
             //temp
             textBox_fileName.Text = fileParametrs.FileUrl;
@@ -104,6 +106,11 @@ namespace Proxy
             }
         }
 
+        private void AppInProcessing(bool obj)
+        {
+            button_start.Enabled = !obj;
+        }
+
         private void GDriveOnUpdateCompleted(string fileId)
         {
             string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
@@ -119,7 +126,6 @@ namespace Proxy
         private void OpenNewExcelBook(string obj)
         {
             toolStripStatusLabel1.Text = "Подгружаем локальный файл";
-            //excel.CreateExcelApplication();
             excel.LoadBook(obj);
         }
 
@@ -144,15 +150,11 @@ namespace Proxy
 
         private void button_start_Click(object sender, EventArgs e)
         {
-            if (!timer_response.Enabled)
+            if (timer_response.Interval > 1)
             {
-                timer_response.Enabled = true;
+                timer_response.Interval = 1;
             }
-            else
-            {
-                timer_response.Stop();
-                timer_response.Start();
-            }
+            timer_response.Start();
         }
 
         //Івент винонання переходу по посиланню
@@ -163,14 +165,22 @@ namespace Proxy
             toolStripStatusLabel1.Text = $"Отправлено {toolStripProgressBar1.Value} из {toolStripProgressBar1.Maximum}";
             if (toolStripProgressBar1.Value == toolStripProgressBar1.Maximum)
             {
-                string message = $"Следующий заход в {nextConnect()}";
-                toolStripStatusLabel1.Text = message;
-                notifyIcon1.BalloonTipText = message;
-                notifyIcon1.ShowBalloonTip(1000);
-                writeLogs(); // записать в .txt
-                writeLogsToExcel(); // записать в xlsx
-                uploadTogDrive();
+                finishTask();
             }
+        }
+
+        private void finishTask()
+        {
+            appInProcessing.Invoke(false);
+            string message = $"Следующий заход в {nextConnect()}";
+            toolStripStatusLabel1.Text = message;
+            notifyIcon1.BalloonTipText = message;
+            notifyIcon1.ShowBalloonTip(1000);
+            writeLogs(); // записать в .txt
+            writeLogsToExcel(); // записать в xlsx
+            uploadTogDrive();
+            logs.Clear();
+            toolStripStatusLabel1.Text = message;
         }
 
         private void uploadTogDrive()
@@ -221,6 +231,7 @@ namespace Proxy
 
         private void button1_Click_1(object sender, EventArgs e)
         {
+            openFileDialog1.Filter = "Excel Files(.xls)|*.xls|Excel Files(.xlsx)| *.xlsx";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 textBox_filePath.Text = openFileDialog1.FileName;
@@ -228,35 +239,16 @@ namespace Proxy
             }
         }
 
-        private void textBox_fileUrl_TextChanged(object sender, EventArgs e)
-        {
-            //if (!textBox_fileName.Text.Contains(".xls") || !textBox_fileName.Text.Contains(".xlsx"))
-            //{
-            //    textBox_fileName.ForeColor = Color.Orange;
-            //    toolStripStatusLabel1.Text = "Неправильное название Excel файла";
-            //}
-            //else
-            //{
-            //    textBox_fileName.ForeColor = Color.Blue;
-            //    toolStripStatusLabel1.Text = "Жми Загрузить!";
-            //}
-        }
 
         private void timer_response_Tick(object sender, EventArgs e)
         {
-            timer_response.Interval = 30 * 60000;
+            timer_response.Interval = (int)numericUpDown_tickValue.Value * 60000;
             Start();            
         }
 
-        private void textBox_filePath_TextChanged(object sender, EventArgs e)
-        {
-            if (textBox_filePath.Text.Contains(".xlsx") || textBox_filePath.Text.Contains(".xls"))
-            {
-                
-            }
-        }
         private void Start()
         {
+            appInProcessing.Invoke(true);
             toolStripStatusLabel1.Text = "Шерстим таблицу";
             var proxyParameters = proxy.Create();
             if (excel != null)
@@ -290,6 +282,7 @@ namespace Proxy
             else
             {
                 MessageBox.Show("Не удалось подключится к Прокси.\nПроверьте параметры или соединение");
+                appInProcessing.Invoke(false);
             }
         }
 
@@ -391,6 +384,7 @@ namespace Proxy
                 string fileId = null;
                 if (files.TryGetValue(fileName, out fileId))
                 {
+                    fileName = $"{fileName}.xlsx";
                     textBox_fileName.ForeColor = Color.Green;
                     toolStripStatusLabel1.Text = "Загрузка файла с gDrive...";
                     gDriveFileId = fileId;
@@ -413,6 +407,17 @@ namespace Proxy
                 toolStripStatusLabel1.Text = $"{fileName} не найден";
                 }
             
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            timer_requestIntervval.Interval = (int)numericUpDown_requestInterval.Value * 1000;
+        }
+
+        private void timer_requestIntervval_Tick(object sender, EventArgs e)
+        {
+            timer_requestIntervval.Interval = (int)numericUpDown_requestInterval.Value * 1000;
+
         }
     }
 }
