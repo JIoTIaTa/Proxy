@@ -30,6 +30,10 @@ namespace Proxy
         private string gDriveFileId = null;
         private Action<string> openNewExcelBook;
         private Action<bool> appInProcessing;
+        /// <summary>
+        /// Загальний параметр номеру посилання для відправки через таймер
+        /// </summary>
+        private int urlNumberToSend = 0;
 
 
         public Form1()
@@ -57,7 +61,7 @@ namespace Proxy
             }
             else
             {
-                fileParametrs = new FileParametrs("FileName", "C:\\file", 100, 30 * 60000, null);
+                fileParametrs = new FileParametrs("FileName", "C:\\file", 100, 30 * 60000, null, 10*1000);
             }
 
 
@@ -81,7 +85,8 @@ namespace Proxy
             textBox_fileName.Text = fileParametrs.FileUrl;
             textBox_filePath.Text = fileParametrs.LocalPath;
             numericUpDown_Rows.Value = fileParametrs.RowsCount;
-            numericUpDown_tickValue.Value = fileParametrs.TimerInterval / 60000;
+            numericUpDown_tickValue.Value = fileParametrs.AllReqeustsTimeInterval / 60000;
+            numericUpDown_requestInterval.Value = fileParametrs.OneRequestTimeInterval / 1000;
 
             try
             {
@@ -90,6 +95,7 @@ namespace Proxy
                 gDrive.ErrorMessage += GDrive_ErrorMessage;
                 gDrive.DownloadProgres += DownloadCompleted;
                 gDrive.UpdateCompleted += GDriveOnUpdateCompleted;
+                toolStripStatusLabel1.Text = "Давай пробовать загрузить файл";
             }
             catch (Exception exception)
             {
@@ -109,6 +115,13 @@ namespace Proxy
         private void AppInProcessing(bool obj)
         {
             button_start.Enabled = !obj;
+            button1.Enabled = !obj;
+            button2.Enabled = !obj;
+            textBox_IP.Enabled = !obj;
+            numericUpDown_port.Enabled = !obj;
+            textBox_login.Enabled = !obj;
+            textBox_password.Enabled = !obj;
+            textBox_fileName.Enabled = !obj;
         }
 
         private void GDriveOnUpdateCompleted(string fileId)
@@ -158,9 +171,14 @@ namespace Proxy
         }
 
         //Івент винонання переходу по посиланню
-        private void WebPage_NewLog(object arg1, string arg2)
+        private void WebPage_NewLog(object arg1, string newLog)
         {
-            logs.Add(arg2);
+            logs.Add(newLog);
+            if (newLog.Contains("NotFound"))
+            {
+                notifyIcon1.BalloonTipText = $"Шеф, все пропало  {newLog}";
+                notifyIcon1.ShowBalloonTip(1000);
+            }
             toolStripProgressBar1.Value++;
             toolStripStatusLabel1.Text = $"Отправлено {toolStripProgressBar1.Value} из {toolStripProgressBar1.Maximum}";
             if (toolStripProgressBar1.Value == toolStripProgressBar1.Maximum)
@@ -172,11 +190,12 @@ namespace Proxy
         private void finishTask()
         {
             appInProcessing.Invoke(false);
+            urlNumberToSend = 0;
             string message = $"Следующий заход в {nextConnect()}";
             toolStripStatusLabel1.Text = message;
             notifyIcon1.BalloonTipText = message;
             notifyIcon1.ShowBalloonTip(1000);
-            writeLogs(); // записать в .txt
+            writeLogsToTxt(); // записать в .txt
             writeLogsToExcel(); // записать в xlsx
             uploadTogDrive();
             logs.Clear();
@@ -197,10 +216,12 @@ namespace Proxy
         }
 
         //Запис логів в .txt
-        private void writeLogs()
+        private void writeLogsToTxt()
         {
-            
-            using (StreamWriter sw = new StreamWriter(@"Logs.txt", true, Encoding.Default))
+
+            string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+            string localFileName = Path.Combine(userDocumentsPath, "Proxy Master", @"Logs.txt");
+            using (StreamWriter sw = new StreamWriter(localFileName, true, Encoding.Default))
             {                
                 var time = DateTime.Now;
                 sw.WriteLine($"Дата: {time.Day}.{time.Month}.{time.Year} | Время: {time.Hour}:{time.Minute}" + Environment.NewLine);
@@ -224,7 +245,9 @@ namespace Proxy
             int nextConnect = dayMinuteTime + minInterval;
             int hour = nextConnect / 60;
             int min = nextConnect % 60;
-            string resultTime = $"{hour}:{min}";
+            string fullMin = "";
+            fullMin = min % 10 < 1 ? $"0{min}" : min.ToString();
+            string resultTime = $"{hour}:{fullMin}";
             return resultTime;
         }
 
@@ -243,10 +266,10 @@ namespace Proxy
         private void timer_response_Tick(object sender, EventArgs e)
         {
             timer_response.Interval = (int)numericUpDown_tickValue.Value * 60000;
-            Start();            
+            StartRequest();            
         }
 
-        private void Start()
+        private void StartRequest()
         {
             appInProcessing.Invoke(true);
             toolStripStatusLabel1.Text = "Шерстим таблицу";
@@ -276,7 +299,9 @@ namespace Proxy
                 #region Перехід на посилання через ParserWorker
                 parser = new ParserWorker<string[]>(new FacebookParser(), proxyParameters);
                 parser.OnNewRequestResult += WebPage_NewLog;
-                parser.Start(urls);
+                //parser.Start(urls); // для найшвидшого проходу по всім посиланням
+                urlNumberToSend = 0;
+                timer_OneResponse.Start();
                 #endregion
             }
             else
@@ -330,8 +355,9 @@ namespace Proxy
             fileParametrs.FileUrl = textBox_fileName.Text;
             fileParametrs.LocalPath = textBox_filePath.Text;
             fileParametrs.RowsCount = (int)numericUpDown_Rows.Value;
-            fileParametrs.TimerInterval = (int)numericUpDown_tickValue.Value * 60000;
+            fileParametrs.AllReqeustsTimeInterval = (int)numericUpDown_tickValue.Value * 60000;
             fileParametrs.gDriveFileId = gDriveFileId;
+            fileParametrs.OneRequestTimeInterval = (int)numericUpDown_requestInterval.Value * 1000;
             string formSettingsFileName = "parameters.dat";
             string formSettingsFullPath = Path.Combine(userDocumentsPath, "Proxy Master", formSettingsFileName);
 
@@ -411,13 +437,22 @@ namespace Proxy
 
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
-            timer_requestIntervval.Interval = (int)numericUpDown_requestInterval.Value * 1000;
+            timer_OneResponse.Interval = (int)numericUpDown_requestInterval.Value * 1000;
         }
 
         private void timer_requestIntervval_Tick(object sender, EventArgs e)
         {
-            timer_requestIntervval.Interval = (int)numericUpDown_requestInterval.Value * 1000;
-
+            timer_OneResponse.Interval = (int)numericUpDown_requestInterval.Value * 1000;
+           
+            parser.Start(urls[urlNumberToSend]);
+            if (urlNumberToSend >= urls.Count-1)
+            {
+                timer_OneResponse.Stop();
+            }
+            else
+            {
+                urlNumberToSend++;
+            }
         }
     }
 }

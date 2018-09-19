@@ -88,8 +88,17 @@ namespace Proxy.Parser
 
         private async void Worker(string currentUrl)
         {
-            var source = await loader.GetResponseCodeByProxy(currentUrl);
-            
+
+            if (currentUrl != null)
+            {
+                var source = await loader.GetResponseCodeByProxy(currentUrl);
+
+                OnNewRequestResult?.Invoke(this, source);
+            }
+            else
+            {
+                OnNewRequestResult?.Invoke(this, "No address");
+            }
 
             #region Тут все, для того щоб парсити сторінку (розкоментуй, якщо буде необхідно щось парсити)
             //var source = await loader.GetResponse(currentUrl);
@@ -104,8 +113,6 @@ namespace Proxy.Parser
 
             #endregion
 
-
-            OnNewRequestResult?.Invoke(this, source);
 
             OnCompleted?.Invoke(this);
 

@@ -121,6 +121,31 @@ namespace Proxy.GoogleDriveAPI
                 return null;
             }
         }
+        public Dictionary<string, string> GetUserFiles(ContentType contentType)
+        {
+            try
+            {
+                IList<File> files = driveService.Files.List().Execute().Files;
+                Dictionary<string, string> result = new Dictionary<string, string>();
+                foreach (var item in files)
+                {
+                    if (!result.ContainsKey(item.Name))
+                    {
+                        string fileType = contentType.GetGoogleDriveType();
+                        if (item.MimeType.Contains(fileType))
+                        {
+                            result.Add(item.Name, item.Id);
+                        }
+                    }
+                }
+                return result;
+            }
+            catch (Exception e)
+            {
+                ErrorMessage.Invoke(e.Message);
+                return null;
+            }
+        }
         /// <summary>
         /// Завантаження файлу з gDrive
         /// </summary>
@@ -265,8 +290,9 @@ namespace Proxy.GoogleDriveAPI
 
             using (var stream = new FileStream(proxySettingsFullPath, FileMode.Open, FileAccess.Read))
             {
+                string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
                 string creadPath = Environment.CurrentDirectory;
-                creadPath = Path.Combine(creadPath, "gDriveUpload", "drive-credentinals.json");
+                creadPath = Path.Combine(userDocumentsPath, "Proxy Master", "gDriveUpload", "drive-credentinals.json");
 
                 return GoogleWebAuthorizationBroker.AuthorizeAsync(
                     GoogleClientSecrets.Load(stream).Secrets,

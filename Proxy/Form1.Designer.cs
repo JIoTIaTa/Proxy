@@ -61,7 +61,7 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.timer_requestIntervval = new System.Windows.Forms.Timer(this.components);
+            this.timer_OneResponse = new System.Windows.Forms.Timer(this.components);
             this.label6 = new System.Windows.Forms.Label();
             this.numericUpDown_requestInterval = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_port)).BeginInit();
@@ -285,7 +285,7 @@
             this.groupBox1.Size = new System.Drawing.Size(593, 44);
             this.groupBox1.TabIndex = 19;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Название файла на gDrive";
+            this.groupBox1.Text = "Название файла на gDrive (без разширения)";
             // 
             // button2
             // 
@@ -379,10 +379,10 @@
             this.tabPage2.Text = "Локальный файл";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
-            // timer_requestIntervval
+            // timer_OneResponse
             // 
-            this.timer_requestIntervval.Interval = 1;
-            this.timer_requestIntervval.Tick += new System.EventHandler(this.timer_requestIntervval_Tick);
+            this.timer_OneResponse.Interval = 1;
+            this.timer_OneResponse.Tick += new System.EventHandler(this.timer_requestIntervval_Tick);
             // 
             // label6
             // 
@@ -491,7 +491,7 @@
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.Timer timer_requestIntervval;
+        private System.Windows.Forms.Timer timer_OneResponse;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.NumericUpDown numericUpDown_requestInterval;
     }
