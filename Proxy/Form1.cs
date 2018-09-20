@@ -31,7 +31,7 @@ namespace Proxy
         /// Загальний параметр номеру посилання для відправки через таймер
         /// </summary>
         private int urlNumberToSend = 0;
-
+        
 
         public Form1()
         {           
