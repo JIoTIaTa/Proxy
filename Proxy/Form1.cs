@@ -6,8 +6,6 @@ using System.Text;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.IO;
-using System.Runtime.CompilerServices;
-using Google.Apis.Download;
 using Proxy.GoogleDriveAPI;
 using Proxy.Parser;
 using Proxy.Parser.Facebook;
@@ -19,7 +17,6 @@ namespace Proxy
         ProxyServer proxy;
         List<string> urls;
         Excel excel;
-        //WebFile webFile;
         private string urlRegex = "http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\\'\\,]*)?";
         private string ipRegex = @"(?<First>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Second>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Third>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Fourth>2[0-4]\d|25[0-5]|[01]?\d\d?)";
         List<string> logs;
@@ -71,7 +68,6 @@ namespace Proxy
             textBox_login.Text = proxy.Login;
             textBox_password.Text = proxy.Password;
             urls = new List<string>();
-            //webFile = new WebFile();
             logs = new List<string>();
             webPage = new WebRequest();
             webPage.NewLog += WebPage_NewLog;
@@ -176,7 +172,9 @@ namespace Proxy
             logs.Add(newLog);
             if (newLog.Contains("NotFound"))
             {
-                notifyIcon1.BalloonTipText = $"Шеф, все пропало  {newLog}";
+                string message = $"{newLog.Replace("NotFound", "забанен")}";
+                message = $"Шеф, все пропало\n Клиент {newLog.Substring(25)}";
+                notifyIcon1.BalloonTipText = message;
                 notifyIcon1.ShowBalloonTip(1000);
             }
             toolStripProgressBar1.Value++;
@@ -274,15 +272,18 @@ namespace Proxy
             appInProcessing.Invoke(true);
             toolStripStatusLabel1.Text = "Шерстим таблицу";
             var proxyParameters = proxy.Create();
-            if (excel != null)
+            try
             {
-                urls = excel.Read((int)numericUpDown_Rows.Value);
+                urls = excel.Read((int) numericUpDown_Rows.Value);
+            }
+            catch (Exception e)
+            {
+
+            }
+            finally
+            {
                 toolStripProgressBar1.Maximum = urls.Count();
                 toolStripProgressBar1.Value = 0;
-            }
-            else
-            {
-                MessageBox.Show("Файл не выбран");
             }
             if (proxyParameters != null)
             {
@@ -382,7 +383,7 @@ namespace Proxy
             if (WindowState == FormWindowState.Minimized)
             {
                 this.Hide();
-                notifyIcon1.BalloonTipText = "Приложение свернуто";
+                notifyIcon1.BalloonTipText = "Я пока поработаю здесь";
                 notifyIcon1.Visible = true;
                 notifyIcon1.ShowBalloonTip(1000);
             }
@@ -448,6 +449,7 @@ namespace Proxy
             if (urlNumberToSend >= urls.Count-1)
             {
                 timer_OneResponse.Stop();
+                urlNumberToSend = 0;
             }
             else
             {
