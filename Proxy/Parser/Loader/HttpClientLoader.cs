@@ -5,40 +5,48 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using Ninject;
+using Proxy.Parser.Facebook;
 
 namespace Proxy.Parser
 {
-    class HtmlLoader
+    class HttpClientLoader : IHtmlLoader
     {
-        
-        WebProxy webProxy;
 
-        public WebProxy WebProxy
+        IWebProxy webProxy;
+        private readonly HttpClient httpClient;
+        public IWebProxy WebProxy
         {
             get { return webProxy; }
             set { webProxy = value; }
         }
 
-        public HtmlLoader()
+
+        public HttpClientLoader(HttpClient httpClient)
         {
-                
+            if(httpClient == null)
+                throw new ArgumentException("httpClient");
+            this.httpClient = httpClient;
         }
+
         /// <summary>
-        /// Черех прокси сервер
+        /// Установить прокси сервер
         /// </summary>
-        /// <param name="webProxy"></param>
-        public HtmlLoader(WebProxy webProxy)
+        /// <param name="webProxy"> прокси сервер</param>
+        public void SetWebProxy(IWebProxy webProxy)
         {
             this.webProxy = webProxy;
         }
-
-
-        public async Task<string> GetSourceByUrl(string currentUrl)
+        /// <summary>
+        /// Простое соединение со страницей
+        /// </summary>
+        /// <param name="currentUrl">Ссылка на страницу</param>
+        /// <returns></returns>
+        public async Task<string> Connect(string currentUrl)
         {
-            HttpClient client = new HttpClient();
+            //HttpClient httpClient = new HttpClient();
 
-            var response = await client.GetAsync(currentUrl);
+            var response = await httpClient.GetAsync(currentUrl);
 
             string source = null;
 
@@ -47,12 +55,17 @@ namespace Proxy.Parser
                  source = await response.Content.ReadAsStringAsync();
             }
 
-            client.Dispose();
+            httpClient.Dispose();
             return source;
         }
-        public async Task<string> GetResponse(string url)
+        /// <summary>
+        /// Получить страницу в виде строки
+        /// </summary>
+        /// <param name="url">Ссылка на страницу</param>
+        /// <returns></returns>
+        public async Task<string> GetResponseText(string url)
         {
-            HttpClient httpClient = new HttpClient();
+            //HttpClient httpClient = new HttpClient();
             using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
             {
                 request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
@@ -91,10 +104,14 @@ namespace Proxy.Parser
                 }
             }
         }
-
+        /// <summary>
+        /// Получить код ответа сервера страницы
+        /// </summary>
+        /// <param name="url">Ссылка на страницу</param>
+        /// <returns></returns>
         public async Task<string> GetResponseCode(string url)
         {
-            HttpClient httpClient = new HttpClient();
+            //HttpClient httpClient = new HttpClient();
             
             using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
             {
@@ -111,16 +128,20 @@ namespace Proxy.Parser
                 }
             }
         }
-
+        /// <summary>
+        /// Получить код ответа сервера страницы через прокси-сервер
+        /// </summary>
+        /// <param name="url">Ссылка на страницу</param>
+        /// <returns></returns>
         public async Task<string> GetResponseCodeByProxy(string url)
         {
-            HttpClient httpClient = null;
+            //HttpClient httpClient = null;
 
-            HttpClientHandler httpClientHandler = new HttpClientHandler();
+            //HttpClientHandler httpClientHandler = new HttpClientHandler();
 
-            httpClientHandler.Proxy = webProxy;
+            //httpClientHandler.Proxy = webProxy;
 
-            httpClient = new HttpClient(httpClientHandler);
+            //httpClient = new HttpClient(httpClientHandler);
 
             string result = null;
             try
@@ -137,7 +158,6 @@ namespace Proxy.Parser
                     using (var response = await httpClient.SendAsync(request).ConfigureAwait(false))
                     {
                         result = $"{url} -> {response.StatusCode.ToString()}";
-                        httpClient.Dispose();
                         return result;
                     }
                 }

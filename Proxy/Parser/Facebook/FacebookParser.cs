@@ -7,6 +7,7 @@ namespace Proxy.Parser.Facebook
 {
     class FacebookParser : IParser<string[]>
     {
+
         public string[] Parse(IHtmlDocument document)
         {
             var list = new List<string>();

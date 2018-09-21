@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using AngleSharp.Parser.Html;
+using Proxy.Parser.Facebook;
 
 namespace Proxy.Parser
 {
@@ -9,9 +10,9 @@ namespace Proxy.Parser
     {
         IParser<T> parser;
 
-        HtmlLoader loader;
+        IHtmlLoader loader;
 
-        WebProxy webProxy;
+        IWebProxy webProxy;
 
         bool isActive;
 
@@ -38,7 +39,7 @@ namespace Proxy.Parser
             }
         }
 
-        public WebProxy WebProxy
+        public IWebProxy WebProxy
         {
             get
             {
@@ -47,7 +48,7 @@ namespace Proxy.Parser
             set
             {
                 webProxy = value;
-                loader.WebProxy = webProxy;
+                loader.SetWebProxy(webProxy);
             }
         }
 
@@ -57,17 +58,27 @@ namespace Proxy.Parser
         public event Action<object> OnCompleted;
         public event Action<object, string> OnNewRequestResult;
 
-        public ParserWorker(IParser<T> parser)
+        /// <summary>
+        /// Без установки прокси сервера(прямой переход)
+        /// </summary>
+        /// <param name="parser">Реализация парсера</param>
+        /// <param name="htmlLoader">Реализация загрузчика</param>
+        public ParserWorker(IParser<T> parser, IHtmlLoader htmlLoader)
         {
-            this.parser = parser;
-            loader = new HtmlLoader();
+            this.parser = parser ?? throw new ArgumentException("parser");
+            loader = htmlLoader ?? throw new ArgumentException("htmlLoader");
         }
-
-        public ParserWorker(IParser<T> parser, WebProxy webProxy) : this(parser)
-        {
-            this.webProxy = webProxy;
-            loader.WebProxy = webProxy;
-        }
+        /// <summary>
+        /// C установкой прокси сервера
+        /// </summary>
+        /// <param name="parser">Реализация парсера</param>
+        /// <param name="htmlLoader">Реализация загрузчика</param>
+        /// <param name="webProxy">Прокси сервер</param>
+        //public ParserWorker(IParser<T> parser, IHtmlLoader htmlLoader, IWebProxy webProxy) : this(parser, htmlLoader)
+        //{
+        //    this.webProxy = webProxy;
+        //    loader.SetWebProxy(webProxy);
+        //}
 
 
         public void Start(string currentUrl)
@@ -101,7 +112,7 @@ namespace Proxy.Parser
             }
 
             #region Тут все, для того щоб парсити сторінку (розкоментуй, якщо буде необхідно щось парсити)
-            //var source = await loader.GetResponse(currentUrl);
+            //var source = await loader.GetResponseText(currentUrl);
 
             //var domParser = new HtmlParser();
 
@@ -136,7 +147,7 @@ namespace Proxy.Parser
             }
 
             #region Тут все, для того щоб парсити сторінку (розкоментуй, якщо буде необхідно щось парсити)
-            //var source = await loader.GetResponse(currentUrl);
+            //var source = await loader.GetResponseText(currentUrl);
 
             //var domParser = new HtmlParser();
 

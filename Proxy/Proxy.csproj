@@ -63,6 +63,9 @@
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="Ninject, Version=4.0.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ninject.4.0.0-beta-0134\lib\net45\Ninject.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -81,7 +84,7 @@
     <Compile Include="DownloadFile.cs" />
     <Compile Include="EnumAtributes\BaseAtribute.cs" />
     <Compile Include="Excel.cs" />
-    <Compile Include="FileParametrs.cs" />
+    <Compile Include="SerialazebleParametrs.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -89,17 +92,20 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="GoogleDriveAPI\GDrive.cs" />
+    <Compile Include="NinjectDI\ParserNjConfig.cs" />
+    <Compile Include="NinjectDI\Providers.cs" />
     <Compile Include="Parser\Facebook\FacebookParser.cs" />
     <Compile Include="Parser\Facebook\FacebookSettings.cs" />
-    <Compile Include="Parser\HtmlLoader.cs" />
+    <Compile Include="Parser\Loader\IHtmlLoader.cs" />
+    <Compile Include="Parser\Loader\HttpClientLoader.cs" />
     <Compile Include="Parser\IParser.cs" />
     <Compile Include="Parser\IParserSettings.cs" />
     <Compile Include="Parser\ParserWorker.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProxyServer.cs" />
-    <Compile Include="Serialize.cs" />
-    <Compile Include="WebRequest.cs" />
+    <Compile Include="Serializator\Serializator.cs" />
+    <Compile Include="Parser\Loader\WebRequestLoader.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

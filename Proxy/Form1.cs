@@ -6,7 +6,10 @@ using System.Text;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.IO;
+using System.Net;
+using Ninject;
 using Proxy.GoogleDriveAPI;
+using Proxy.Ninject;
 using Proxy.Parser;
 using Proxy.Parser.Facebook;
 
@@ -20,8 +23,8 @@ namespace Proxy
         private string urlRegex = "http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\\'\\,]*)?";
         private string ipRegex = @"(?<First>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Second>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Third>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Fourth>2[0-4]\d|25[0-5]|[01]?\d\d?)";
         List<string> logs;
-        WebRequest webPage;
-        FileParametrs fileParametrs;
+        WebRequestLoader webPage;
+        SerialazebleParametrs _serialazebleParametrs;
         private ParserWorker<string[]> parser;
         private GDrive gDrive;
         private string gDriveFileId = null;
@@ -31,11 +34,16 @@ namespace Proxy
         /// Загальний параметр номеру посилання для відправки через таймер
         /// </summary>
         private int urlNumberToSend = 0;
-        
+
+        private IKernel parserDiNinjectKernel;
+
+
 
         public Form1()
         {           
             InitializeComponent();
+
+            
 
             #region Сериализация
 
@@ -52,13 +60,13 @@ namespace Proxy
             }
             string formSettingsFileName = "parameters.dat";
             string formSettingsFullPath = Path.Combine(userDocumentsPath, "Proxy Master", formSettingsFileName);
-            if (Serializator.Read(fileParametrs, formSettingsFullPath) != null)
+            if (Serializator.Read(_serialazebleParametrs, formSettingsFullPath) != null)
             {
-                fileParametrs = Serializator.Read(fileParametrs, formSettingsFullPath);
+                _serialazebleParametrs = Serializator.Read(_serialazebleParametrs, formSettingsFullPath);
             }
             else
             {
-                fileParametrs = new FileParametrs("FileName", "C:\\file", 100, 30 * 60000, null, 10*1000);
+                _serialazebleParametrs = new SerialazebleParametrs("FileName", "C:\\file", 100, 30 * 60000, null, 10*1000, "213.141.129.97", 47881, "khorok", "khorok412");
             }
 
 
@@ -69,7 +77,7 @@ namespace Proxy
             textBox_password.Text = proxy.Password;
             urls = new List<string>();
             logs = new List<string>();
-            webPage = new WebRequest();
+            webPage = new WebRequestLoader();
             webPage.NewLog += WebPage_NewLog;
             excel = new Excel();
             excel.BookLoaded += Excel_BookLoaded;
@@ -78,11 +86,11 @@ namespace Proxy
             appInProcessing += AppInProcessing;
 
             //temp
-            textBox_fileName.Text = fileParametrs.FileUrl;
-            textBox_filePath.Text = fileParametrs.LocalPath;
-            numericUpDown_Rows.Value = fileParametrs.RowsCount;
-            numericUpDown_tickValue.Value = fileParametrs.AllReqeustsTimeInterval / 60000;
-            numericUpDown_requestInterval.Value = fileParametrs.OneRequestTimeInterval / 1000;
+            textBox_fileName.Text = _serialazebleParametrs.FileUrl1;
+            textBox_filePath.Text = _serialazebleParametrs.LocalPath;
+            numericUpDown_Rows.Value = _serialazebleParametrs.RowsCount;
+            numericUpDown_tickValue.Value = _serialazebleParametrs.AllReqeustsTimeInterval / 60000;
+            numericUpDown_requestInterval.Value = _serialazebleParametrs.OneRequestTimeInterval / 1000;
 
             try
             {
@@ -106,6 +114,8 @@ namespace Proxy
                 tabControl1.SelectedIndex = 1;
                 tabControl1.TabPages[0].Enabled = false;
             }
+            //Конфіги впровадження залежностей для парсера
+            parserDiNinjectKernel = new StandardKernel(new ParserNjConfig(proxy.IPAddress, proxy.Port, proxy.Login, proxy.Password));
         }
 
         private void AppInProcessing(bool obj)
@@ -288,8 +298,8 @@ namespace Proxy
             if (proxyParameters != null)
             {
                 toolStripStatusLabel1.Text = "Начиаем спам";
-                #region Перехід на посилання через WebRequest
-                //WebRequest webPage = new WebRequest(proxyParameters);
+                #region Перехід на посилання через WebRequestLoader
+                //WebRequestLoader webPage = new WebRequestLoader(proxyParameters);
                 //webPage.NewLog += WebPage_NewLog;
                 //foreach (var item in urls)
                 //{
@@ -298,7 +308,8 @@ namespace Proxy
                 #endregion
 
                 #region Перехід на посилання через ParserWorker
-                parser = new ParserWorker<string[]>(new FacebookParser(), proxyParameters);
+                //parser = new ParserWorker<string[]>(new FacebookParser(), proxyParameters);
+                parser = parserDiNinjectKernel.Get<ParserWorker<string[]>>();
                 parser.OnNewRequestResult += WebPage_NewLog;
                 //parser.Start(urls); // для найшвидшого проходу по всім посиланням
                 urlNumberToSend = 0;
@@ -353,16 +364,16 @@ namespace Proxy
 
             Serializator.Write(proxy, proxySettingsFullPath);
 
-            fileParametrs.FileUrl = textBox_fileName.Text;
-            fileParametrs.LocalPath = textBox_filePath.Text;
-            fileParametrs.RowsCount = (int)numericUpDown_Rows.Value;
-            fileParametrs.AllReqeustsTimeInterval = (int)numericUpDown_tickValue.Value * 60000;
-            fileParametrs.gDriveFileId = gDriveFileId;
-            fileParametrs.OneRequestTimeInterval = (int)numericUpDown_requestInterval.Value * 1000;
+            _serialazebleParametrs.FileUrl1 = textBox_fileName.Text;
+            _serialazebleParametrs.LocalPath = textBox_filePath.Text;
+            _serialazebleParametrs.RowsCount = (int)numericUpDown_Rows.Value;
+            _serialazebleParametrs.AllReqeustsTimeInterval = (int)numericUpDown_tickValue.Value * 60000;
+            _serialazebleParametrs.gDriveFileId = gDriveFileId;
+            _serialazebleParametrs.OneRequestTimeInterval = (int)numericUpDown_requestInterval.Value * 1000;
             string formSettingsFileName = "parameters.dat";
             string formSettingsFullPath = Path.Combine(userDocumentsPath, "Proxy Master", formSettingsFileName);
 
-            Serializator.Write(fileParametrs, formSettingsFullPath);
+            Serializator.Write(_serialazebleParametrs, formSettingsFullPath);
         }
 
         private void Form1_Load(object sender, EventArgs e)
