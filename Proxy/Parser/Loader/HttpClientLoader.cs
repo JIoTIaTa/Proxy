@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -14,19 +15,27 @@ namespace Proxy.Parser
     {
 
         IWebProxy webProxy;
-        private readonly HttpClient httpClient;
+
+        private readonly string accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
+        private readonly string userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36";
+        private readonly string acceptCharset = "ISO-8859-1";
+        private readonly string acceptEncoding = "gzip, deflate, br";
+
+        //private readonly HttpClient httpClient;
         public IWebProxy WebProxy
         {
             get { return webProxy; }
             set { webProxy = value; }
         }
 
-
-        public HttpClientLoader(HttpClient httpClient)
+        public HttpClientLoader(IWebProxy webProxy)
         {
-            if(httpClient == null)
-                throw new ArgumentException("httpClient");
-            this.httpClient = httpClient;
+            this.webProxy = webProxy ??  throw new ArgumentException("webProxy load ERROR");
+        }
+
+        public HttpClientLoader()
+        {
+           
         }
 
         /// <summary>
@@ -45,18 +54,22 @@ namespace Proxy.Parser
         public async Task<string> Connect(string currentUrl)
         {
             //HttpClient httpClient = new HttpClient();
-
-            var response = await httpClient.GetAsync(currentUrl);
-
-            string source = null;
-
-            if (response != null && response.StatusCode == HttpStatusCode.OK)
+            string result = null;
+            using (var httpClient = new HttpClient())
             {
-                 source = await response.Content.ReadAsStringAsync();
+                using (var response = await httpClient.GetAsync(currentUrl))
+                {
+                    if (response != null && response.StatusCode == HttpStatusCode.OK)
+                    {
+                        result = await response.Content.ReadAsStringAsync();
+                    }
+                    else
+                    {
+                        result = response.StatusCode.ToString();
+                    }
+                }
             }
-
-            httpClient.Dispose();
-            return source;
+            return result;
         }
         /// <summary>
         /// Получить страницу в виде строки
@@ -68,39 +81,30 @@ namespace Proxy.Parser
             //HttpClient httpClient = new HttpClient();
             using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
             {
-                request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
-                //request.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate, br");
-                request.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36");
-                request.Headers.TryAddWithoutValidation("Accept-Charset", "ISO-8859-1");
+                request.Headers.TryAddWithoutValidation("Accept", accept);
+                request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+                request.Headers.TryAddWithoutValidation("Accept-Charset", acceptCharset);
 
                 string result = null;
-
-                using (var response = await httpClient.SendAsync(request).ConfigureAwait(false))
+                using (var httpClient = new HttpClient())
                 {
-                    //response.EnsureSuccessStatusCode();
-                    if (response.StatusCode == HttpStatusCode.OK)
+                    using (var response = await httpClient.SendAsync(request).ConfigureAwait(false))
                     {
-                        using (var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                        if (response.StatusCode == HttpStatusCode.OK)
                         {
-                            //result = await responseStream.ReadAsync()
-                            //var stream = await response.Content.ReadAsStreamAsync();
-
-                            byte[] streamByte = new byte[responseStream.Length];
-                            responseStream.Read(streamByte, 0, streamByte.Length);
-                            result = Encoding.UTF8.GetString(streamByte);
+                            using (var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                            {
+                                byte[] streamByte = new byte[responseStream.Length];
+                                responseStream.Read(streamByte, 0, streamByte.Length);
+                                result = Encoding.UTF8.GetString(streamByte);
+                            }
                         }
-                        //using (var decompressedStream = new GZipStream(responseStream, CompressionMode.Decompress))
-                        //using (var streamReader = new StreamReader(decompressedStream))
-                        //{
-                        //    string result1 = await streamReader.ReadToEndAsync().ConfigureAwait(false);
-                        //}
+                        else
+                        {
+                            result = $"{url} -> {response.StatusCode.ToString()}";
+                        }
+                        return result;
                     }
-                    else
-                    {
-                        result = $"{url} -> {response.StatusCode.ToString()}";
-                    }
-                    httpClient.Dispose();
-                    return result;
                 }
             }
         }
@@ -111,22 +115,23 @@ namespace Proxy.Parser
         /// <returns></returns>
         public async Task<string> GetResponseCode(string url)
         {
-            //HttpClient httpClient = new HttpClient();
-            
-            using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
+            string result;
+            using (var httpClient = new HttpClient())
             {
-                request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
-                //request.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate, br");
-                request.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36");
-                request.Headers.TryAddWithoutValidation("Accept-Charset", "ISO-8859-1");
-
-                using (var response = await httpClient.SendAsync(request).ConfigureAwait(false))
+                using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
                 {
-                    var result = $"{url} -> {response.StatusCode.ToString()}";
-                    httpClient.Dispose();
-                    return result;
+                    request.Headers.TryAddWithoutValidation("Accept", accept);
+                    request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+                    request.Headers.TryAddWithoutValidation("Accept-Charset", acceptCharset);
+
+                    using (var response = await httpClient.SendAsync(request).ConfigureAwait(false))
+                    {
+                        result = $"{url} -> {response.StatusCode.ToString()}";
+                        httpClient.Dispose();
+                    }
                 }
             }
+            return result;
         }
         /// <summary>
         /// Получить код ответа сервера страницы через прокси-сервер
@@ -135,32 +140,27 @@ namespace Proxy.Parser
         /// <returns></returns>
         public async Task<string> GetResponseCodeByProxy(string url)
         {
-            //HttpClient httpClient = null;
-
-            //HttpClientHandler httpClientHandler = new HttpClientHandler();
-
-            //httpClientHandler.Proxy = webProxy;
-
-            //httpClient = new HttpClient(httpClientHandler);
-
             string result = null;
             try
             {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
+                HttpClientHandler httpClientHandler = new HttpClientHandler();
+                httpClientHandler.Proxy = webProxy;
+                using (var httpClient1 = new HttpClient(httpClientHandler))
                 {
-                    request.Headers.TryAddWithoutValidation("Accept",
-                        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
-                    //request.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate, br");
-                    request.Headers.TryAddWithoutValidation("User-Agent",
-                        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36");
-                    request.Headers.TryAddWithoutValidation("Accept-Charset", "ISO-8859-1");
-
-                    using (var response = await httpClient.SendAsync(request).ConfigureAwait(false))
+                    using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
                     {
-                        result = $"{url} -> {response.StatusCode.ToString()}";
-                        return result;
+                        request.Headers.TryAddWithoutValidation("Accept", accept);
+                        request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+                        request.Headers.TryAddWithoutValidation("Accept-Charset", acceptCharset);
+
+                        using (var response = await httpClient1.SendAsync(request).ConfigureAwait(false))
+                        {
+                            result = $"{url} -> {response.StatusCode.ToString()}";
+                            return result;
+                        }
                     }
                 }
+               
             }
             catch (Exception e)
             {

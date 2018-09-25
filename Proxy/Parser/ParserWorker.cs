@@ -74,11 +74,11 @@ namespace Proxy.Parser
         /// <param name="parser">Реализация парсера</param>
         /// <param name="htmlLoader">Реализация загрузчика</param>
         /// <param name="webProxy">Прокси сервер</param>
-        //public ParserWorker(IParser<T> parser, IHtmlLoader htmlLoader, IWebProxy webProxy) : this(parser, htmlLoader)
-        //{
-        //    this.webProxy = webProxy;
-        //    loader.SetWebProxy(webProxy);
-        //}
+        public ParserWorker(IParser<T> parser, IHtmlLoader htmlLoader, IWebProxy webProxy) : this(parser, htmlLoader)
+        {
+            this.webProxy = webProxy;
+            loader.SetWebProxy(webProxy);
+        }
 
 
         public void Start(string currentUrl)

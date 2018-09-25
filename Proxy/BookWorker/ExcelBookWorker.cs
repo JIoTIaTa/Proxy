@@ -6,10 +6,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AngleSharp.Css.Values;
+using Proxy.BookWorker;
 
 namespace Proxy
 {
-    class Excel
+    class ExcelBookWorker : IBookWorker
     {
         Application ObjWorkApplication;
         Workbook ObjWorkBook;
@@ -19,13 +20,23 @@ namespace Proxy
 
         private string urlPattern = "http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\\'\\,]*)?";
 
-        public Excel()
+        public ExcelBookWorker()
         {
             CreateExcelApplication();
         }
+
+        public void CreateApplication()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void CloseApplication()
+        {
+            throw new NotImplementedException();
+        }
+
         public void LoadBook(string fileName)
         {
-            //CloseExcelApplication();
             try
             {
                 Task task = Task.Run(() =>
@@ -38,8 +49,18 @@ namespace Proxy
             }
             catch { }
         }
-        
-        ~Excel()
+
+        public List<string> Read()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Write()
+        {
+            throw new NotImplementedException();
+        }
+
+        ~ExcelBookWorker()
         {
             //Удаляем приложение (выходим из экселя) - а то будет висеть в процессах!
             CloseExcelApplication();
@@ -64,7 +85,7 @@ namespace Proxy
             }
         }
 
-        public void CloseCurrentBook()
+        public void CloseBook()
         {
             try
             {
@@ -108,8 +129,11 @@ namespace Proxy
             catch { }
             return urls;
         }
-
-        public void  WriteLogs(List<string> logs)
+        /// <summary>
+        /// Зафарбовка кольорами в залежнсоті від тексту
+        /// </summary>
+        /// <param name="rows"></param>
+        public void  Write(List<string> rows)
         {
             Worksheet ObjWorkSheet;
             ObjWorkSheet = (Worksheet)ObjWorkBook.Sheets[1];
@@ -117,7 +141,7 @@ namespace Proxy
             try
             {
                 int row = 1;
-                foreach (var item in logs)
+                foreach (var item in rows)
                 {
                     if (item.Contains("NotFound"))
                     {

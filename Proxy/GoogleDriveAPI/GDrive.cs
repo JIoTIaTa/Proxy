@@ -51,7 +51,7 @@ namespace Proxy.GoogleDriveAPI
         [BaseAttribute.GoogleDriveType("application/vnd.google-apps.drive-sdk")]
         driveSdk
     }
-    class GDrive
+    public class GDrive
     {
         private string[] scopes = { DriveService.Scope.Drive };
         private string applicationName = "Proxy";
