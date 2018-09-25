@@ -18,7 +18,6 @@ namespace Proxy
         public event Action<object> BookLoaded;
         public event Action<object> BookClosed;
 
-        private string urlPattern = "http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\\'\\,]*)?";
 
         public ExcelBookWorker()
         {
@@ -51,6 +50,11 @@ namespace Proxy
         }
 
         public List<string> Read()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Dictionary<string, string> ReadWithCellsReference()
         {
             throw new NotImplementedException();
         }
@@ -115,15 +119,8 @@ namespace Proxy
                 for (int i = 1; i <= rowsCount; i++)
                 {
                     string text = ((Range)(ObjWorkSheet.Cells[i, 1])).Text.ToString();
-
-                    if (Regex.IsMatch(text, urlPattern))
-                    {
-                        urls.Add(text);
-                    }
-                    else
-                    {
-                        urls.Add(null);
-                    }
+                    
+                    urls.Add(text);
                 }
             }
             catch { }
@@ -169,6 +166,11 @@ namespace Proxy
                 catch { }
             }
             catch(Exception exception) { }
+        }
+
+        public void Write(Dictionary<string, string> valueCellDictionary)
+        {
+            throw new NotImplementedException();
         }
     }
 }

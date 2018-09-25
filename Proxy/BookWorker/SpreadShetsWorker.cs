@@ -35,6 +35,11 @@ namespace Proxy.BookWorker
             return ReadExcelFileDOM(this.fileName);
         }
 
+        public Dictionary<string, string> ReadWithCellsReference()
+        {
+            return ReadExcelFileWithCellsreference(this.fileName);
+        }
+
         public void Write()
         {
             throw new NotImplementedException();
@@ -44,6 +49,12 @@ namespace Proxy.BookWorker
         {
             throw new NotImplementedException();
         }
+
+        public void Write(Dictionary<string, string> valueCellDictionary)
+        {
+            throw new NotImplementedException();
+        }
+
         private List<string> ReadExcelFileDOM(string fileName)
         {
             List<string> resultList = new List<string>();
@@ -67,6 +78,34 @@ namespace Proxy.BookWorker
                 }
             }
             return resultList;
+        }
+        private Dictionary<string, string> ReadExcelFileWithCellsreference(string fileName)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            using (SpreadsheetDocument spreadsheetDocument = SpreadsheetDocument.Open(fileName, false))
+            {
+                WorkbookPart workbookPart = spreadsheetDocument.WorkbookPart;
+                WorksheetPart worksheetPart = workbookPart.WorksheetParts.First();
+                SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
+                string value;
+                string cellRef;
+                foreach (Row r in sheetData.Elements<Row>())
+                {
+                    foreach (Cell c in r.Elements<Cell>())
+                    {
+                        if (c.CellValue != null)
+                        {
+                            value = GetCellValue(fileName, 1, c.CellReference);
+                            cellRef = c.CellReference;
+                            if (!result.ContainsKey(cellRef))
+                            {
+                                result.Add(cellRef, value);
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
         }
         public string GetCellValue(string fileName, string sheetName, string addressName)
         {

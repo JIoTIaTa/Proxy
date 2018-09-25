@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.RegularExpressions;
 using AngleSharp.Parser.Html;
 using Proxy.Parser.Facebook;
 
@@ -57,6 +58,7 @@ namespace Proxy.Parser
         public event Action<object, T> OnNewData;
         public event Action<object> OnCompleted;
         public event Action<object, string> OnNewRequestResult;
+        public event Action<object, string, string> OnNewRequestResultTable;
 
         /// <summary>
         /// Без установки прокси сервера(прямой переход)
@@ -86,6 +88,11 @@ namespace Proxy.Parser
             isActive = true;
             Worker(currentUrl);
         }
+        public void Start(string currentUrl, string cellReference)
+        {
+            isActive = true;
+            Worker(currentUrl, cellReference);
+        }
         public void Start(List<string> currentUrls)
         {
             isActive = true;
@@ -100,7 +107,7 @@ namespace Proxy.Parser
         private async void Worker(string currentUrl)
         {
 
-            if (currentUrl != null)
+            if (isUrl(currentUrl))
             {
                 var source = await loader.GetResponseCodeByProxy(currentUrl);
 
@@ -129,13 +136,52 @@ namespace Proxy.Parser
 
             isActive = false;
         }
-        private async void Worker(List<string> currentUrls)
+
+        /// <summary>
+        /// Для роботи з таблицями
+        /// </summary>
+        /// <param name="currentUrl">посилання</param>
+        /// <param name="cellReference">номер комірки таблиці</param>
+        private async void Worker(string currentUrl, string cellReference)
         {
-            foreach (var url in currentUrls)
+
+
+            if (isUrl(currentUrl))
             {
-                if (url != null)
+                var source = await loader.GetResponseCodeByProxy(currentUrl);
+
+                OnNewRequestResultTable?.Invoke(this, cellReference, source);
+            }
+            else
+            {
+                OnNewRequestResultTable?.Invoke(this, cellReference, "No address");
+            }
+
+            #region Тут все, для того щоб парсити сторінку (розкоментуй, якщо буде необхідно щось парсити)
+            //var source = await loader.GetResponseText(currentUrl);
+
+            //var domParser = new HtmlParser();
+
+            //var document = await domParser.ParseAsync(source);
+
+            //var result = parser.Parse(document);
+
+            //OnNewData?.Invoke(this, result);
+
+            #endregion
+
+
+            OnCompleted?.Invoke(this);
+
+            isActive = false;
+        }
+        private async void Worker(List<string> urls)
+        {
+            foreach (var currentUrl in urls)
+            {
+                if (isUrl(currentUrl))
                 {
-                    var source = await loader.GetResponseCodeByProxy(url);
+                    var source = await loader.GetResponseCodeByProxy(currentUrl);
 
                     OnNewRequestResult?.Invoke(this, source);
                 }
@@ -164,6 +210,19 @@ namespace Proxy.Parser
             isActive = false;
         }
 
+        private bool isUrl(string text)
+        {
+            string urlPattern = "http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\\'\\,]*)?";
+
+            if (Regex.IsMatch(text, urlPattern))
+            {
+                return true;
+            }
+                else
+            {
+                return false;
+            }
+        }
 
     }
 }

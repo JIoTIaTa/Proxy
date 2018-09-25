@@ -19,10 +19,11 @@ namespace Proxy
 {
     public partial class Form1 : Form
     {
-        List<string> urls;
+        Dictionary<string, string> urls;
+        Dictionary<string, string> logs;
         IBookWorker bookWorker;
         private string ipRegex = @"(?<First>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Second>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Third>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Fourth>2[0-4]\d|25[0-5]|[01]?\d\d?)";
-        List<string> logs;
+        
         SerialazebleParametrs parametrs;
         private ParserWorker<string[]> parser;
         private GDrive gDrive;
@@ -74,8 +75,8 @@ namespace Proxy
             numericUpDown_requestInterval.Value = parametrs.OneRequestTimeInterval / 1000;
             #endregion
 
-            urls = new List<string>();
-            logs = new List<string>();
+            urls = new Dictionary<string, string>();
+            logs = new Dictionary<string, string>();
             
             
         }
@@ -139,9 +140,12 @@ namespace Proxy
         }
 
         //Івент винонання переходу по посиланню
-        private void WebPage_NewLog(object arg1, string newLog)
+        private void WebPage_NewLog(object arg1, string cellReference, string newLog)
         {
-            logs.Add(newLog);
+            if (!logs.ContainsKey(cellReference))
+            {
+                logs.Add(cellReference, newLog);
+            }
             if (newLog.Contains("NotFound"))
             {
                 string message = $"{newLog.Replace("NotFound", "забанен")}";
@@ -246,7 +250,8 @@ namespace Proxy
             try
             {
                 //urls = bookWorker.Read((int) numericUpDown_Rows.Value);
-                urls = bookWorker.Read();
+                urls = bookWorker.ReadWithCellsReference();
+                //List<string> textList = bookWorker.Read();
             }
             catch (Exception e) { toolStripStatusLabel1.Text = e.Message; }
             finally
@@ -257,7 +262,7 @@ namespace Proxy
             toolStripStatusLabel1.Text = "Начиаем спам";
             #region Перехід на посилання через ParserWorker
             parser = parserDIKernel.Get<ParserWorker<string[]>>();
-            parser.OnNewRequestResult += WebPage_NewLog;
+            parser.OnNewRequestResultTable += WebPage_NewLog;
             //parser.Start(urls); // для найшвидшого проходу по всім посиланням
             urlNumberToSend = 0;
             timer_OneResponse.Start();
@@ -384,7 +389,7 @@ namespace Proxy
         {
             timer_OneResponse.Interval = (int)numericUpDown_requestInterval.Value * 1000;
            
-            parser.Start(urls[urlNumberToSend]);
+            parser.Start(urls.Keys.ElementAt(urlNumberToSend), urls.Values.ElementAt(urlNumberToSend));
             if (urlNumberToSend >= urls.Count-1)
             {
                 timer_OneResponse.Stop();

@@ -28,6 +28,11 @@ namespace Proxy.BookWorker
         /// <returns></returns>
         List<string> Read();
         /// <summary>
+        /// Читати всі комірки поточної книги
+        /// </summary>
+        /// <returns>Значення - комірка </returns>
+        Dictionary<string, string> ReadWithCellsReference();
+        /// <summary>
         /// Писати в книгу
         /// </summary>
         void Write();
@@ -36,5 +41,6 @@ namespace Proxy.BookWorker
         /// </summary>
         /// <param name="rows">Список рядків для запису</param>
         void Write(List<string> rows);
+        void Write(Dictionary<string,string> valueCellDictionary);
     }
 }
