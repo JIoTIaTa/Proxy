@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Drawing;
-using System.IO;
-using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Ninject;
 using Proxy.Parser.Facebook;
 
 namespace Proxy.Parser

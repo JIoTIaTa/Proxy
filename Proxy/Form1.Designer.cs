@@ -37,12 +37,10 @@
             this.button_start = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.numericUpDown_Rows = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
             this.textBox_filePath = new System.Windows.Forms.TextBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
@@ -55,6 +53,7 @@
             this.button2 = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.checkBox_useProxy = new System.Windows.Forms.CheckBox();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.закрToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -65,7 +64,6 @@
             this.label6 = new System.Windows.Forms.Label();
             this.numericUpDown_requestInterval = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_port)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_Rows)).BeginInit();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_tickValue)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -140,23 +138,6 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // numericUpDown_Rows
-            // 
-            this.numericUpDown_Rows.Location = new System.Drawing.Point(526, 121);
-            this.numericUpDown_Rows.Maximum = new decimal(new int[] {
-            100000,
-            0,
-            0,
-            0});
-            this.numericUpDown_Rows.Name = "numericUpDown_Rows";
-            this.numericUpDown_Rows.Size = new System.Drawing.Size(75, 20);
-            this.numericUpDown_Rows.TabIndex = 8;
-            this.numericUpDown_Rows.Value = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -192,15 +173,6 @@
             this.label4.Size = new System.Drawing.Size(45, 13);
             this.label4.TabIndex = 11;
             this.label4.Text = "Пароль";
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(522, 103);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(94, 13);
-            this.label5.TabIndex = 12;
-            this.label5.Text = "Адресов в файле";
             // 
             // textBox_filePath
             // 
@@ -247,7 +219,7 @@
             // 
             // numericUpDown_tickValue
             // 
-            this.numericUpDown_tickValue.Location = new System.Drawing.Point(352, 121);
+            this.numericUpDown_tickValue.Location = new System.Drawing.Point(326, 138);
             this.numericUpDown_tickValue.Maximum = new decimal(new int[] {
             360,
             0,
@@ -271,7 +243,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(349, 105);
+            this.label7.Location = new System.Drawing.Point(323, 122);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(138, 13);
             this.label7.TabIndex = 18;
@@ -309,6 +281,7 @@
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.checkBox_useProxy);
             this.groupBox3.Controls.Add(this.textBox_IP);
             this.groupBox3.Controls.Add(this.textBox_login);
             this.groupBox3.Controls.Add(this.textBox_password);
@@ -322,7 +295,19 @@
             this.groupBox3.Size = new System.Drawing.Size(295, 100);
             this.groupBox3.TabIndex = 21;
             this.groupBox3.TabStop = false;
-            this.groupBox3.Text = " Параметры прокси";
+            this.groupBox3.Text = "Использовать прокси";
+            // 
+            // checkBox_useProxy
+            // 
+            this.checkBox_useProxy.AutoSize = true;
+            this.checkBox_useProxy.Checked = true;
+            this.checkBox_useProxy.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_useProxy.Location = new System.Drawing.Point(123, 0);
+            this.checkBox_useProxy.Name = "checkBox_useProxy";
+            this.checkBox_useProxy.Size = new System.Drawing.Size(15, 14);
+            this.checkBox_useProxy.TabIndex = 26;
+            this.checkBox_useProxy.UseVisualStyleBackColor = true;
+            this.checkBox_useProxy.CheckedChanged += new System.EventHandler(this.checkBox_useProxy_CheckedChanged);
             // 
             // notifyIcon1
             // 
@@ -387,7 +372,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(349, 147);
+            this.label6.Location = new System.Drawing.Point(323, 163);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(182, 13);
             this.label6.TabIndex = 25;
@@ -395,7 +380,7 @@
             // 
             // numericUpDown_requestInterval
             // 
-            this.numericUpDown_requestInterval.Location = new System.Drawing.Point(352, 163);
+            this.numericUpDown_requestInterval.Location = new System.Drawing.Point(326, 179);
             this.numericUpDown_requestInterval.Maximum = new decimal(new int[] {
             360,
             0,
@@ -427,19 +412,17 @@
             this.Controls.Add(this.label7);
             this.Controls.Add(this.numericUpDown_tickValue);
             this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.numericUpDown_Rows);
             this.Controls.Add(this.button_start);
             this.Controls.Add(this.groupBox3);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = " Proxy Master";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.Resize += new System.EventHandler(this.Form1_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_port)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_Rows)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_tickValue)).EndInit();
@@ -467,12 +450,10 @@
         private System.Windows.Forms.Button button_start;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.NumericUpDown numericUpDown_Rows;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TextBox textBox_filePath;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
@@ -494,6 +475,7 @@
         private System.Windows.Forms.Timer timer_OneResponse;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.NumericUpDown numericUpDown_requestInterval;
+        private System.Windows.Forms.CheckBox checkBox_useProxy;
     }
 }
 

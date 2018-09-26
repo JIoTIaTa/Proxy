@@ -25,29 +25,36 @@ namespace Proxy.Ninject
         private readonly int port;
         private readonly string login;
         private readonly string password;
+        private readonly bool useProxyServer;
 
-        public ParserNjConfig(string address, int port, string login, string password)
+        public ParserNjConfig(string address, int port, string login, string password, bool useProxyServer)
         {
             this.address = address;
             this.port = port;
             this.login = login;
             this.password = password;
+            this.useProxyServer = useProxyServer;
         }
         public override void Load()
         {
-            //Bind<HttpClient>().ToMethod(context => new HttpClient(new HttpClientHandler
-            //    { Proxy = new ProxyServer(address, port, login, password).Create() }));
             Bind<IWebProxy>().ToMethod(context => createWebProxy());
             Bind<IParser<string[]>>().To<FacebookParser>();
             Bind<IHtmlLoader>().To<HttpClientLoader>();
 
             Bind<ParserWorker<string[]>>().ToSelf();
         }
-
         private IWebProxy createWebProxy()
         {
-            WebProxy webProxy = new WebProxy(address, port);
-            webProxy.Credentials = new NetworkCredential(login, password);
+            WebProxy webProxy;
+            if (useProxyServer)
+            {
+                webProxy = new WebProxy(address, port);
+                webProxy.Credentials = new NetworkCredential(login, password);
+            }
+            else
+            {
+                webProxy = new WebProxy();
+            }
             return webProxy;
         }
     }
@@ -72,7 +79,7 @@ namespace Proxy.Ninject
         {
             Bind<SerialazebleParametrs>().ToMethod(context =>
                 readBinaryFile(_formSettingsFullPath));
-            Bind<IBookWorker>().To<SpreadShetsWorker>();
+            Bind<IBookWorker>().To<OpenXmlWorker>();
             Bind<GDrive>().ToMethod(context => new GDrive(_clients_secretFullPath));
             Bind<Form1>().ToSelf();
         }

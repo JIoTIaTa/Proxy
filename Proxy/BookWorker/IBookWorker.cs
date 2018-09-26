@@ -7,6 +7,7 @@ namespace Proxy.BookWorker
     {
         event Action<object> BookLoaded;
         event Action<object> BookClosed;
+        event Action<object,string> ErrorMessage;
         /// <summary>
         /// Загрузити (відкрити) книгу
         /// </summary>
@@ -42,5 +43,6 @@ namespace Proxy.BookWorker
         /// <param name="rows">Список рядків для запису</param>
         void Write(List<string> rows);
         void Write(Dictionary<string,string> valueCellDictionary);
+        void EdidCellColorByValue(Dictionary<string, string> cellText);
     }
 }

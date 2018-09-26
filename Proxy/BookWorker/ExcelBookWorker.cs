@@ -2,10 +2,7 @@
 using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using AngleSharp.Css.Values;
 using Proxy.BookWorker;
 
 namespace Proxy
@@ -17,6 +14,7 @@ namespace Proxy
 
         public event Action<object> BookLoaded;
         public event Action<object> BookClosed;
+        public event Action<object, string> ErrorMessage;
 
 
         public ExcelBookWorker()
@@ -60,6 +58,11 @@ namespace Proxy
         }
 
         public void Write()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Write(List<string> rows)
         {
             throw new NotImplementedException();
         }
@@ -130,7 +133,7 @@ namespace Proxy
         /// Зафарбовка кольорами в залежнсоті від тексту
         /// </summary>
         /// <param name="rows"></param>
-        public void  Write(List<string> rows)
+        public void EdidCellColorByValue(Dictionary<string, string> rows)
         {
             Worksheet ObjWorkSheet;
             ObjWorkSheet = (Worksheet)ObjWorkBook.Sheets[1];
@@ -138,7 +141,7 @@ namespace Proxy
             try
             {
                 int row = 1;
-                foreach (var item in rows)
+                foreach (var item in rows.Values)
                 {
                     if (item.Contains("NotFound"))
                     {
@@ -165,10 +168,15 @@ namespace Proxy
                 }
                 catch { }
             }
-            catch(Exception exception) { }
+            catch { }
         }
 
         public void Write(Dictionary<string, string> valueCellDictionary)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetCellBorderStyle(Dictionary<string, string> cellText)
         {
             throw new NotImplementedException();
         }

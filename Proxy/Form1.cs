@@ -6,14 +6,11 @@ using System.Text;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.IO;
-using System.Net;
-using Microsoft.Office.Core;
 using Ninject;
 using Proxy.BookWorker;
 using Proxy.GoogleDriveAPI;
 using Proxy.Ninject;
 using Proxy.Parser;
-using Proxy.Parser.Facebook;
 
 namespace Proxy
 {
@@ -21,10 +18,8 @@ namespace Proxy
     {
         Dictionary<string, string> urls;
         Dictionary<string, string> logs;
-        IBookWorker bookWorker;
-        private string ipRegex = @"(?<First>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Second>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Third>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Fourth>2[0-4]\d|25[0-5]|[01]?\d\d?)";
-        
-        SerialazebleParametrs parametrs;
+        private IBookWorker bookWorker;
+        SerialazebleParametrs parameters;
         private ParserWorker<string[]> parser;
         private GDrive gDrive;
         private Action<string> openNewExcelBook;
@@ -44,41 +39,47 @@ namespace Proxy
         {
             InitializeComponent();
 
-            this.parametrs = serialazebleParametrs ?? throw new ArgumentException("serialazebleParametrs load ERROR");
+            this.parameters = serialazebleParametrs ?? throw new ArgumentException("serialazebleParametrs load ERROR");
             AppInProcessing += appInProcessing;
 
             this.bookWorker = bookWorker ?? throw new ArgumentException("bookWorker load ERROR");
             this.bookWorker.BookLoaded += BookWorkerBookLoaded;
             this.bookWorker.BookClosed += BookWorkerOnBookClosed;
+            this.bookWorker.ErrorMessage += ErrorMessage;
             openNewExcelBook += OpenNewExcelBook;
-
             this.gDrive = gDrive ?? throw new ArgumentException("gDrive load ERROR");
             gDrive.ErrorMessage += GDrive_ErrorMessage;
             gDrive.DownloadProgres += DownloadCompleted;
             gDrive.UpdateCompleted += GDriveOnUpdateCompleted;
+            gDrive.ErrorMessage += ErrorMessage;
 
             //Конфіги впровадження залежностей для парсера
-            parserDIKernel = new StandardKernel(new ParserNjConfig(parametrs.IPAddress, parametrs.Port, parametrs.Login, parametrs.Password));
+            parserDIKernel = new StandardKernel(new ParserNjConfig(parameters.IPAddress, parameters.Port, parameters.Login, parameters.Password, parameters.UseProxyServer));
 
             #region Встановення параметрів форми за десеріалізованими даними
 
             string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-            textBox_IP.Text = parametrs.IPAddress;
-            numericUpDown_port.Value = parametrs.Port;
-            textBox_login.Text = parametrs.Login;
-            textBox_password.Text = parametrs.Password;
+            checkBox_useProxy.Checked = parameters.UseProxyServer;
+            textBox_IP.Text = parameters.IPAddress;
+            numericUpDown_port.Value = parameters.Port;
+            textBox_login.Text = parameters.Login;
+            textBox_password.Text = parameters.Password;
 
-            textBox_fileName.Text = parametrs.FileUrl1;
-            textBox_filePath.Text = parametrs.LocalPath;
-            numericUpDown_Rows.Value = parametrs.RowsCount;
-            numericUpDown_tickValue.Value = parametrs.AllReqeustsTimeInterval / 60000;
-            numericUpDown_requestInterval.Value = parametrs.OneRequestTimeInterval / 1000;
+            textBox_fileName.Text = parameters.FileUrl1;
+            textBox_filePath.Text = parameters.LocalPath;
+            numericUpDown_tickValue.Value = parameters.AllReqeustsTimeInterval / 60000;
+            numericUpDown_requestInterval.Value = parameters.OneRequestTimeInterval / 1000;
             #endregion
 
             urls = new Dictionary<string, string>();
             logs = new Dictionary<string, string>();
             
             
+        }
+
+        private void ErrorMessage(object arg1, string arg2)
+        {
+            throw new NotImplementedException();
         }
 
         private void appInProcessing(bool obj)
@@ -91,13 +92,14 @@ namespace Proxy
             textBox_login.Enabled = !obj;
             textBox_password.Enabled = !obj;
             textBox_fileName.Enabled = !obj;
+            checkBox_useProxy.Enabled = !obj;
         }
 
         private void GDriveOnUpdateCompleted(string fileId)
         {
             string userDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
             string localFileName = Path.Combine(userDocumentsPath, "Proxy Master", textBox_fileName.Text);
-            gDrive.DownloadFileFromDrive(fileId, localFileName);
+            gDrive.DownloadDocumentFromDrive(fileId, localFileName, ContentType.xlxs);
         }
 
         private void BookWorkerOnBookClosed(object obj)
@@ -118,9 +120,9 @@ namespace Proxy
             openNewExcelBook.Invoke(filePath);
         }
 
-        private void GDrive_ErrorMessage(string obj)
+        private void GDrive_ErrorMessage(object obj, string message)
         {
-            toolStripStatusLabel1.Text = obj;
+            toolStripStatusLabel1.Text = message;
         }
 
         //Івент, коли книга відкрилась
@@ -179,9 +181,9 @@ namespace Proxy
         private void uploadTogDrive()
         {
             bookWorker.CloseBook();
-            if (parametrs.gDriveFileId != null) // заміним файл, якщо його прогружали і залишився ID
+            if (parameters.gDriveFileId != null) // заміним файл, якщо його прогружали і залишився ID
             {
-                gDrive.UpdateFileAtDrive(parametrs.gDriveFileId, textBox_filePath.Text, ContentType.spreadsheet);
+                gDrive.UpdateFileAtDrive(parameters.gDriveFileId, textBox_filePath.Text, ContentType.spreadsheet);
             }
             else
             {
@@ -208,7 +210,7 @@ namespace Proxy
         //Правка книги bookWorker по логам
         private void writeLogsToExcel()
         {
-            bookWorker.Write(logs);
+            bookWorker.EdidCellColorByValue(logs);
         }
         //Прорахунок наступного проходу
         private string calculateNextConnect()
@@ -220,7 +222,7 @@ namespace Proxy
             int hour = nextConnect / 60;
             int min = nextConnect % 60;
             string fullMin = "";
-            fullMin = min % 10 < 1 ? $"0{min}" : min.ToString();
+            fullMin = min < 10 ? $"0{min}" : min.ToString();
             string resultTime = $"{hour}:{fullMin}";
             return resultTime;
         }
@@ -249,9 +251,7 @@ namespace Proxy
             toolStripStatusLabel1.Text = "Шерстим таблицу";
             try
             {
-                //urls = bookWorker.Read((int) numericUpDown_Rows.Value);
                 urls = bookWorker.ReadWithCellsReference();
-                //List<string> textList = bookWorker.Read();
             }
             catch (Exception e) { toolStripStatusLabel1.Text = e.Message; }
             finally
@@ -263,7 +263,6 @@ namespace Proxy
             #region Перехід на посилання через ParserWorker
             parser = parserDIKernel.Get<ParserWorker<string[]>>();
             parser.OnNewRequestResultTable += WebPage_NewLog;
-            //parser.Start(urls); // для найшвидшого проходу по всім посиланням
             urlNumberToSend = 0;
             timer_OneResponse.Start();
             #endregion
@@ -276,10 +275,12 @@ namespace Proxy
         }
         private void textBox_IP_TextChanged(object sender, EventArgs e)
         {
+            string ipRegex = @"(?<First>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Second>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Third>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Fourth>2[0-4]\d|25[0-5]|[01]?\d\d?)";
+
             if (Regex.IsMatch(textBox_IP.Text, ipRegex))
             {
                 textBox_IP.ForeColor = Color.Green;
-                parametrs.IPAddress = textBox_IP.Text;
+                parameters.IPAddress = textBox_IP.Text;
             }
             else
             {
@@ -288,33 +289,32 @@ namespace Proxy
         }
         private void numericUpDown_port_ValueChanged(object sender, EventArgs e)
         {
-            parametrs.Port = (int)numericUpDown_port.Value;
+            parameters.Port = (int)numericUpDown_port.Value;
         }
         private void textBox_login_TextChanged(object sender, EventArgs e)
         {
-            parametrs.Login = textBox_login.Text;
+            parameters.Login = textBox_login.Text;
         }
         private void textBox_password_TextChanged(object sender, EventArgs e)
         {
-            parametrs.Password = textBox_password.Text;
+            parameters.Password = textBox_password.Text;
         }
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            parametrs.IPAddress = textBox_IP.Text;
-            parametrs.Port = (int)numericUpDown_port.Value;
-            parametrs.Login = textBox_login.Text;
-            parametrs.Password = textBox_password.Text;
+            parameters.IPAddress = textBox_IP.Text;
+            parameters.Port = (int)numericUpDown_port.Value;
+            parameters.Login = textBox_login.Text;
+            parameters.Password = textBox_password.Text;
 
-            parametrs.FileUrl1 = textBox_fileName.Text;
-            parametrs.LocalPath = textBox_filePath.Text;
-            parametrs.RowsCount = (int)numericUpDown_Rows.Value;
-            parametrs.AllReqeustsTimeInterval = (int)numericUpDown_tickValue.Value * 60000;
-            parametrs.OneRequestTimeInterval = (int)numericUpDown_requestInterval.Value * 1000;
+            parameters.FileUrl1 = textBox_fileName.Text;
+            parameters.LocalPath = textBox_filePath.Text;
+            parameters.AllReqeustsTimeInterval = (int)numericUpDown_tickValue.Value * 60000;
+            parameters.OneRequestTimeInterval = (int)numericUpDown_requestInterval.Value * 1000;
 
             string formSettingsFileName = "parameters.dat";
             string formSettingsFullPath = Path.Combine(userDocumentsPath, "Proxy Master", formSettingsFileName);
 
-            Serializator.Write(parametrs, formSettingsFullPath);
+            Serializator.Write(parameters, formSettingsFullPath);
         }
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -353,6 +353,16 @@ namespace Proxy
         {
             timer_OneResponse.Interval = (int)numericUpDown_requestInterval.Value * 1000;
         }
+        private void checkBox_useProxy_CheckedChanged(object sender, EventArgs e)
+        {
+            bool enabled = checkBox_useProxy.Checked;
+            textBox_IP.Enabled = enabled;
+            numericUpDown_port.Enabled = enabled;
+            textBox_login.Enabled = enabled;
+            textBox_password.Enabled = enabled;
+            parameters.UseProxyServer = enabled;
+            parserDIKernel = new StandardKernel(new ParserNjConfig(parameters.IPAddress, parameters.Port, parameters.Login, parameters.Password, parameters.UseProxyServer));
+        }
         #endregion
 
         private void loadGDriveFile(string fileName)
@@ -362,14 +372,14 @@ namespace Proxy
                 string fileId = null;
                 if (files.TryGetValue(fileName, out fileId))
                 {
-                    //fileName = $"{fileName}.xlsx";
                     textBox_fileName.ForeColor = Color.Green;
                     toolStripStatusLabel1.Text = "Загрузка файла с gDrive...";
-                    parametrs.gDriveFileId = fileId;
+                    parameters.gDriveFileId = fileId;
                     try
                     {
                         string localFileName = Path.Combine(userDocumentsPath, "Proxy Master", fileName);
-                        gDrive.DownloadFileFromDrive(fileId, localFileName);
+                        //gDrive.DownloadFileFromDrive(fileId, localFileName);
+                        gDrive.DownloadDocumentFromDrive(fileId, localFileName, ContentType.xlxs);
                     }
                     catch (Exception e)
                     {
@@ -388,7 +398,7 @@ namespace Proxy
         private void timer_requestIntervval_Tick(object sender, EventArgs e)
         {
             timer_OneResponse.Interval = (int)numericUpDown_requestInterval.Value * 1000;
-           
+            if(urls.Count != 0)
             parser.Start(urls.Keys.ElementAt(urlNumberToSend), urls.Values.ElementAt(urlNumberToSend));
             if (urlNumberToSend >= urls.Count-1)
             {
@@ -400,5 +410,6 @@ namespace Proxy
                 urlNumberToSend++;
             }
         }
+
     }
 }

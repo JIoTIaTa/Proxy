@@ -54,8 +54,6 @@ namespace Proxy.Parser
         }
 
         #endregion
-
-        public event Action<object, T> OnNewData;
         public event Action<object> OnCompleted;
         public event Action<object, string> OnNewRequestResult;
         public event Action<object, string, string> OnNewRequestResultTable;
@@ -142,10 +140,8 @@ namespace Proxy.Parser
         /// </summary>
         /// <param name="currentUrl">посилання</param>
         /// <param name="cellReference">номер комірки таблиці</param>
-        private async void Worker(string currentUrl, string cellReference)
+        private async void Worker(string cellReference, string currentUrl )
         {
-
-
             if (isUrl(currentUrl))
             {
                 var source = await loader.GetResponseCodeByProxy(currentUrl);
@@ -214,14 +210,7 @@ namespace Proxy.Parser
         {
             string urlPattern = "http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\\'\\,]*)?";
 
-            if (Regex.IsMatch(text, urlPattern))
-            {
-                return true;
-            }
-                else
-            {
-                return false;
-            }
+            return Regex.IsMatch(text, urlPattern);
         }
 
     }

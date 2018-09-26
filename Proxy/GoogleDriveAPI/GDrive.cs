@@ -42,14 +42,19 @@ namespace Proxy.GoogleDriveAPI
         [BaseAttribute.GoogleDriveType("application/vnd.google-apps.site")]
         site,
         [BaseAttribute.GoogleDriveType("application/vnd.ms-excel")]
-        [BaseAttribute.FileExtension("xlsx")]
+        excel,
+        [BaseAttribute.GoogleDriveType("application/vnd.google-apps.spreadsheet")]
         spreadsheet,
         [BaseAttribute.GoogleDriveType("application/vnd.google-apps.unknown")]
         unknown,
         [BaseAttribute.GoogleDriveType("application/vnd.google-apps.video")]
         video,
         [BaseAttribute.GoogleDriveType("application/vnd.google-apps.drive-sdk")]
-        driveSdk
+        driveSdk,
+        [BaseAttribute.GoogleDriveType("application/x-vnd.oasis.opendocument.spreadsheet")]
+        OpenOfficesheet,
+        [BaseAttribute.GoogleDriveType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]
+        xlxs
     }
     public class GDrive
     {
@@ -61,7 +66,7 @@ namespace Proxy.GoogleDriveAPI
 
 
         public event Action<string> DownloadProgres;
-        public event Action<string> ErrorMessage;
+        public event Action<object,string> ErrorMessage;
         public event Action<string, string> UploadCompleted;
         public event Action<string> UpdateCompleted;
 
@@ -84,7 +89,7 @@ namespace Proxy.GoogleDriveAPI
             }
             catch (Exception e)
             {
-                ErrorMessage.Invoke(e.Message);
+                ErrorMessage.Invoke(this, e.Message);
             }
         }
         private void Authentication()
@@ -96,7 +101,7 @@ namespace Proxy.GoogleDriveAPI
             }
             catch (Exception e)
             {
-                ErrorMessage.Invoke(e.Message);
+                ErrorMessage.Invoke(this, e.Message);
             }
         }
 
@@ -117,7 +122,7 @@ namespace Proxy.GoogleDriveAPI
             }
             catch (Exception e)
             {
-                ErrorMessage.Invoke(e.Message);
+                ErrorMessage.Invoke(this, e.Message);
                 return null;
             }
         }
@@ -142,7 +147,7 @@ namespace Proxy.GoogleDriveAPI
             }
             catch (Exception e)
             {
-                ErrorMessage.Invoke(e.Message);
+                ErrorMessage.Invoke(this, e.Message);
                 return null;
             }
         }
@@ -156,7 +161,6 @@ namespace Proxy.GoogleDriveAPI
             try
             {
                 var request = driveService.Files.Get(fileId);
-
                 using (var memoryStream = new MemoryStream())
                 {
                     await request.DownloadAsync(memoryStream);
@@ -171,7 +175,32 @@ namespace Proxy.GoogleDriveAPI
             }
             catch (Exception exception)
             {
-                ErrorMessage.Invoke(exception.Message);
+                ErrorMessage.Invoke(this, exception.Message);
+            }
+        }
+        public async void DownloadDocumentFromDrive(string fileId, string filePath, ContentType contentType)
+        {
+            try
+            {
+                string type = contentType.GetGoogleDriveType();
+                var request = driveService.Files.Export(fileId, type);
+                using (var memoryStream = new MemoryStream())
+                {
+                    await request.DownloadAsync(memoryStream);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                    {
+                        await fileStream.WriteAsync(memoryStream.GetBuffer(), 0, memoryStream.GetBuffer().Length);
+                    }
+                    DownloadProgres?.Invoke(filePath);
+                }
+
+                DownloadProgres?.Invoke(filePath);
+
+            }
+            catch (Exception exception)
+            {
+                ErrorMessage.Invoke(this, exception.Message);
             }
         }
 
@@ -180,8 +209,8 @@ namespace Proxy.GoogleDriveAPI
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="filePath"></param>
-        /// <param name="connentType"></param>
-        public void UploadFileToDrive(string fileName, string filePath, ContentType connentType)
+        /// <param name="contentType"></param>
+        public void UploadFileToDrive(string fileName, string filePath, ContentType contentType)
         {
             try
             {
@@ -192,7 +221,7 @@ namespace Proxy.GoogleDriveAPI
 
                 using (var stream = new FileStream(filePath, FileMode.Open))
                 {
-                    string type = connentType.GetGoogleDriveType();
+                    string type = contentType.GetGoogleDriveType();
                     request = driveService.Files.Create(fileMetadata, stream, type);
                     request.Upload();
 
@@ -203,7 +232,7 @@ namespace Proxy.GoogleDriveAPI
             }
             catch (Exception exception)
             {
-                ErrorMessage.Invoke(exception.Message);
+                ErrorMessage.Invoke(this, exception.Message);
             }
 
         }
@@ -227,7 +256,7 @@ namespace Proxy.GoogleDriveAPI
             }
             catch (Exception exception)
             {
-                ErrorMessage.Invoke(exception.Message);
+                ErrorMessage.Invoke(this, exception.Message);
             }
 
         }
@@ -254,7 +283,7 @@ namespace Proxy.GoogleDriveAPI
             }
             catch (Exception exception)
             {
-                ErrorMessage.Invoke(exception.Message);
+                ErrorMessage.Invoke(this, exception.Message);
             }
         }
         /// <summary>
@@ -281,7 +310,7 @@ namespace Proxy.GoogleDriveAPI
             }
             catch (Exception exception)
             {
-                ErrorMessage.Invoke(exception.Message);
+                ErrorMessage.Invoke(this, exception.Message);
             }
         }
 

@@ -19,6 +19,7 @@ namespace Proxy
         private int port = 47881;
         private string login = "khorok";
         private string password = "khorok412";
+        private bool useProxyServer = false;
         public string IPAddress
         {
             get { return iPAddress; }
@@ -44,6 +45,7 @@ namespace Proxy
         public int RowsCount { get => rowsCount; set => rowsCount = value; }
         public int AllReqeustsTimeInterval { get => allReqeustsTimeInterval; set => allReqeustsTimeInterval = value; }
         public int OneRequestTimeInterval { get => oneRequestTimeInterval; set => oneRequestTimeInterval = value; }
+        public bool UseProxyServer { get => useProxyServer; set => useProxyServer = value; }
 
         /// <summary>
         /// Дефолтні параметри
@@ -53,7 +55,7 @@ namespace Proxy
             
         }
         public SerialazebleParametrs(string FileUrl, string LocalPath, int RowsCount, int allReqeustsTimeInterval, string gDriveFileId, int oneRequestTimeInterval,
-                                     string address, int port, string login, string password)
+                                     string address, int port, string login, string password, bool useProxyServer)
         {
             this.FileUrl1 = FileUrl;
             this.LocalPath = LocalPath;
@@ -65,6 +67,7 @@ namespace Proxy
             this.port = port;
             this.login = login;
             this.password = password;
+            this.useProxyServer = useProxyServer;
         }
     }
 }

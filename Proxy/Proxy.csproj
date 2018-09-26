@@ -94,7 +94,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BookWorker\SpreadShetsWorker.cs" />
+    <Compile Include="BookWorker\OpenXmlWorker.cs" />
     <Compile Include="DownloadFile.cs" />
     <Compile Include="EnumAtributes\BaseAtribute.cs" />
     <Compile Include="BookWorker\ExcelBookWorker.cs" />
