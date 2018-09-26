@@ -179,7 +179,7 @@
             this.textBox_filePath.Location = new System.Drawing.Point(126, 26);
             this.textBox_filePath.Name = "textBox_filePath";
             this.textBox_filePath.ReadOnly = true;
-            this.textBox_filePath.Size = new System.Drawing.Size(453, 20);
+            this.textBox_filePath.Size = new System.Drawing.Size(344, 20);
             this.textBox_filePath.TabIndex = 13;
             // 
             // statusStrip1
@@ -359,7 +359,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(602, 76);
+            this.tabPage2.Size = new System.Drawing.Size(491, 76);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Локальный файл";
             this.tabPage2.UseVisualStyleBackColor = true;
