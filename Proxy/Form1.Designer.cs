@@ -118,7 +118,7 @@
             this.button_start.Enabled = false;
             this.button_start.Location = new System.Drawing.Point(3, 209);
             this.button_start.Name = "button_start";
-            this.button_start.Size = new System.Drawing.Size(613, 23);
+            this.button_start.Size = new System.Drawing.Size(502, 23);
             this.button_start.TabIndex = 6;
             this.button_start.Text = "Запустить";
             this.button_start.UseVisualStyleBackColor = true;
@@ -189,14 +189,14 @@
             this.toolStripStatusLabel1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 249);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(625, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(512, 22);
             this.statusStrip1.TabIndex = 14;
             this.statusStrip1.Text = "statusStrip1";
             // 
             // toolStripProgressBar1
             // 
             this.toolStripProgressBar1.Name = "toolStripProgressBar1";
-            this.toolStripProgressBar1.Size = new System.Drawing.Size(400, 16);
+            this.toolStripProgressBar1.Size = new System.Drawing.Size(300, 16);
             this.toolStripProgressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             // 
             // toolStripStatusLabel1
@@ -209,7 +209,7 @@
             // 
             this.textBox_fileName.Location = new System.Drawing.Point(7, 25);
             this.textBox_fileName.Name = "textBox_fileName";
-            this.textBox_fileName.Size = new System.Drawing.Size(466, 20);
+            this.textBox_fileName.Size = new System.Drawing.Size(355, 20);
             this.textBox_fileName.TabIndex = 15;
             // 
             // timer_response
@@ -261,9 +261,9 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(476, 15);
+            this.button2.Location = new System.Drawing.Point(366, 16);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(111, 23);
+            this.button2.Size = new System.Drawing.Size(108, 23);
             this.button2.TabIndex = 8;
             this.button2.Text = "Загрузить";
             this.button2.UseVisualStyleBackColor = true;
@@ -338,7 +338,7 @@
             this.tabControl1.Location = new System.Drawing.Point(6, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(610, 102);
+            this.tabControl1.Size = new System.Drawing.Size(499, 102);
             this.tabControl1.TabIndex = 23;
             // 
             // tabPage1
@@ -348,7 +348,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(602, 76);
+            this.tabPage1.Size = new System.Drawing.Size(491, 76);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Файл gDrive";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -405,7 +405,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(625, 271);
+            this.ClientSize = new System.Drawing.Size(512, 271);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.numericUpDown_requestInterval);
             this.Controls.Add(this.tabControl1);
